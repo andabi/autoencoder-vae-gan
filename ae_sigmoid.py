@@ -1,9 +1,8 @@
 import os
 
 import tensorflow as tf
-from tensorflow.examples.tutorials.mnist import input_data
 import numpy as np
-import mnist_visualizer as v
+import mnist
 
 BATCH_SIZE = 64
 Z_SIZE = 128
@@ -15,7 +14,7 @@ SKIP_STEP = 5
 CKPT_PATH = 'checkpoints/sigmoid'
 # class AutoEncoder(object):
 
-mnist = input_data.read_data_sets('data/mnist', one_hot=True)
+# data = input_data.read_data_sets('data/mnist', one_hot=True)
 
 input = tf.placeholder(tf.float32, shape=(None, 784))
 
@@ -24,26 +23,10 @@ w_1_encoder = tf.Variable(tf.zeros(shape=(784, Z_SIZE)))
 b_1_encoder = tf.Variable(tf.random_uniform(shape=(1, Z_SIZE)))
 out_encoder = tf.nn.sigmoid(tf.matmul(input, w_1_encoder) + b_1_encoder)
 
-# w_2_encoder = tf.Variable(tf.zeros(shape=(H_1_SIZE, H_2_SIZE)))
-# b_2_encoder = tf.Variable(tf.zeros(shape=(1, H_2_SIZE)))
-# out_2_encoder = tf.nn.sigmoid(tf.matmul(out_1_encoder, w_2_encoder) + b_2_encoder)
-#
-# w_3_encoder = tf.Variable(tf.zeros(shape=(H_2_SIZE, Z_SIZE)))
-# b_3_encoder = tf.Variable(tf.zeros(shape=(1, Z_SIZE)))
-# out_encoder = tf.nn.sigmoid(tf.matmul(out_2_encoder, w_3_encoder) + b_3_encoder)
-
 # decoder
 w_1_decoder = tf.Variable(tf.zeros(shape=(Z_SIZE, 784)))
 b_1_decoder = tf.Variable(tf.random_uniform(shape=(1, 784)))
 out_decoder = tf.nn.sigmoid(tf.matmul(out_encoder, w_1_decoder) + b_1_decoder)
-
-# w_2_decoder = tf.Variable(tf.zeros(shape=(H_2_SIZE, H_1_SIZE)))
-# b_2_decoder = tf.Variable(tf.zeros(shape=(1, H_1_SIZE)))
-# out_2_decoder = tf.nn.sigmoid(tf.matmul(out_1_decoder, w_2_decoder) + b_2_decoder)
-#
-# w_3_decoder = tf.Variable(tf.zeros(shape=(H_1_SIZE, 784)))
-# b_3_decoder = tf.Variable(tf.zeros(shape=(1, 784)))
-# out_decoder = tf.nn.sigmoid(tf.matmul(out_2_decoder, w_3_decoder) + b_3_decoder)
 
 global_step = tf.Variable(0, dtype=tf.int32, trainable=False, name='global_step')
 loss = tf.reduce_mean(tf.square(input - out_decoder))
@@ -65,12 +48,12 @@ with tf.Session() as sess:
     initial_step = global_step.eval() / BATCH_SIZE
     print initial_step
     if initial_step < TRAIN_STEPS:
-        num_batches = int(mnist.train.num_examples / BATCH_SIZE)
+        num_batches = int(mnist.data.train.num_examples / BATCH_SIZE)
 
         for step in range(initial_step, TRAIN_STEPS):
             total_loss = 0
             for _ in range(num_batches):
-                input_batch, _ = mnist.train.next_batch(BATCH_SIZE)
+                input_batch, _ = mnist.data.train.next_batch(BATCH_SIZE)
                 _, loss_batch, g_loss, g_out = sess.run([optimizer, loss, grad_loss, grad_out_decoder], feed_dict={input: input_batch})
                 # z = sess.run(out_encoder, feed_dict={input: input_batch})
                 # print(z)
@@ -82,9 +65,9 @@ with tf.Session() as sess:
                 saver.save(sess, CKPT_PATH + '/autoencoder', step)
 
     # test
-    x, _ = mnist.test.next_batch(1)
+    x, _ = mnist.data.test.next_batch(1)
     # x = np.random.uniform(size=(10, 784))
-    v.show(x)
+    mnist.show(x)
     # out_1 = sess.run(out_1_encoder, feed_dict={input: x})
     # out_2 = sess.run(out_2_encoder, feed_dict={out_1_encoder: out_1})
     z = sess.run(out_encoder, feed_dict={input: x})
@@ -95,7 +78,7 @@ with tf.Session() as sess:
 
     imgs = sess.run(out_decoder, feed_dict={out_encoder: z})
     for img in imgs:
-        v.show(img)
+        mnist.show(img)
 
     # W_1, b_1, W_2, b_2 = sess.run([w_1_decoder, b_1_decoder, w_2_decoder, b_2_decoder])
     # print(W_2)

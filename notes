@@ -1,0 +1,23 @@
+- 배운 것
+gradient가 죽지 않게 해야한다. 1. 초기값(weight, bias 모두 중요!) 잘 주기 2. 학습률을 크게 잡지 않기
+leaky_relu와 relu간 계산량 차이는 크다. 효과에 별 차이가 없다면 relu를 쓰자.
+
+- 실험을 통해 알게된 사실
+레이어를 더 많이 쌓으면 오히려 나빠진다.( 어떤 입력에 대해서도 같은 결과가 나오는 현상 = 어떤 지점에서 학습이 멈춤 = relu의 모든 출력을 0으로 해버리는 레어어가 생김) 3개 이하로 쌓아도 잘 동작한다.
+마지막 레이어의 activation을 sigmoid로 하면 학습이 좀 더 빠르고 loss가 더 많이 준다. relu로 해도 동작은 한다.
+weight 0, bias 0이면 grad가 죽는다. relu가 조기에 다 블럭되서. weight가 0이 아니면 초반에 grad가 너무 커져서 0으로 해야하고, bias는 0이 아니여야만 bias 크기만큼의 적절한 grad가 생긴다!
+
+- Todo
+generation test
+z_hidden을 줄이면 => 입력 숫자와 같은 숫자가 안 나올듯함 z_hidden이 거의 항상 0으로..
+z_hidden을 늘리면 => 0으로만 출력되는 일은 없어졌다 ??
+일단 입력 숫자와 같은 숫자가 나오는지부터 확인하자
+배치 사이즈와 관련있나? 같은 숫자끼리 묶어야 하나? 1. 같은 숫자만으로만 학습 2. 같은 숫자끼리 배치묶어서 학습
+
+mnist 압축풀기 제거
+net와 train,test를 분리. 여러 버전의 net 만들어놓기
+
+- next Todo
+encoder/decoder weight share
+convolutional ae
+배치 노멀라이제이션

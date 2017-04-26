@@ -1,41 +1,43 @@
 import os
 
-import tensorflow as tf
 import numpy as np
 import mnist
 from utils import *
+import tensorflow as tf
 
-BATCH_SIZE = 256
 X_SIZE = 784
-Z_SIZE = 128
 H_1_SIZE = 512
 H_2_SIZE = 256
-LR = 0.0005
-FINAL_STEP = 50
-CKPT_STEP = 10
+Z_SIZE = 128
+
+BATCH_SIZE = 64
+LR = 0.001
+FINAL_STEP = 20
+CKPT_STEP = 5
 CKPT_PATH = 'checkpoints/relu/'
 
 # init
 data = mnist.data
 visualizer = mnist.show
 
-input = tf.placeholder(tf.float32, shape=(BATCH_SIZE, X_SIZE))
 
+# net
+input = tf.placeholder(tf.float32, shape=(None, X_SIZE))
 out_1_encoder, w_1_encoder = fc_with_weight(input, H_1_SIZE)
-out_2_encoder = fc(out_1_encoder, H_1_SIZE)
-out_3_encoder = fc(out_2_encoder, H_2_SIZE)
-out_4_encoder = fc(out_3_encoder, H_2_SIZE)
-out_5_encoder, w_5_encoder = fc_with_weight(out_4_encoder, Z_SIZE)
+# out_2_encoder = fc(out_1_encoder, H_1_SIZE)
+# out_3_encoder = fc(out_2_encoder, H_2_SIZE)
+# out_4_encoder = fc(out_3_encoder, H_2_SIZE)
+out_5_encoder, w_5_encoder = fc_with_weight(out_1_encoder, Z_SIZE)
 out_encoder = fc(out_5_encoder, Z_SIZE)
-
-# decoder
 out_1_decoder, w_1_decoder = fc_with_weight(out_encoder, Z_SIZE)
-out_2_decoder = fc(out_1_decoder, H_2_SIZE)
-out_3_decoder = fc(out_2_decoder, H_2_SIZE)
-out_4_decoder = fc(out_3_decoder, H_1_SIZE)
-out_5_decoder, w_5_decoder = fc_with_weight(out_4_decoder, H_1_SIZE)
-out_decoder = fc(out_5_decoder, X_SIZE)
+# out_2_decoder = fc(out_1_decoder, H_2_SIZE)
+# out_3_decoder = fc(out_2_decoder, H_2_SIZE)
+# out_4_decoder = fc(out_3_decoder, H_1_SIZE)
+out_5_decoder, w_5_decoder = fc_with_weight(out_1_decoder, H_1_SIZE)
+out_decoder = fc(out_5_decoder, X_SIZE, tf.nn.sigmoid)
 
+
+# train
 loss = tf.reduce_mean(tf.square(input - out_decoder))
 optimizer = tf.train.AdamOptimizer(learning_rate=LR).minimize(loss)
 
@@ -43,8 +45,6 @@ grad_loss = tf.gradients(loss, [w_1_encoder, w_5_encoder, w_1_decoder, w_5_decod
 grad_out_decoder = tf.gradients(out_decoder, [w_1_encoder, w_5_encoder, w_1_decoder, w_5_decoder])
 
 global_step = tf.Variable(0, dtype=tf.int32, trainable=False, name='global_step')
-
-# train
 saver = tf.train.Saver()
 
 with tf.Session() as sess:
@@ -80,20 +80,16 @@ with tf.Session() as sess:
             saver.save(sess, CKPT_PATH + '/autoencoder', step)
 
     # test
-    x, _ = data.test.next_batch(1)
     # x = np.random.uniform(size=(10, 784))
-    visualizer(x)
-    out_1 = sess.run(out_1_encoder, feed_dict={input: x})
-    out_2 = sess.run(out_2_encoder, feed_dict={out_1_encoder: out_1})
-    z = sess.run(out_encoder, feed_dict={out_2_encoder: out_2})
-    # out = sess.run(out_2_decoder, feed_dict={out_encoder: z})
-    # print(np.sum(out_1, axis=1))
-    # print(np.sum(out_2, axis=1))
+    x, _ = data.test.next_batch(2)
+    for o in x:
+        visualizer(o)
+    z = sess.run(out_encoder, feed_dict={input: x})
     # print(np.sum(z, axis=1))
-
-    img = sess.run(out_decoder, feed_dict={out_encoder: z})
-    print(np.sum(img))
-    visualizer(img)
+    out = sess.run(out_decoder, feed_dict={out_encoder: z})
+    for o in out:
+        visualizer(o)
+    # print(np.sum(img))
 
     # W_1, b_1, W_2, b_2 = sess.run([w_1_decoder, b_1_decoder, w_2_decoder, b_2_decoder])
     # print(W_2)

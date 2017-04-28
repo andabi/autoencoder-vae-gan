@@ -5,7 +5,8 @@ from tensorflow.examples.tutorials.mnist import input_data
 
 data = input_data.read_data_sets('data/mnist', one_hot=True)
 
-def show(input):
+
+def visualize(input):
     img = np.reshape(np.squeeze(input), (28, 28))
     plt.imshow(img, cmap=cm.binary)
     plt.show()

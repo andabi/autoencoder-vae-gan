@@ -9,7 +9,7 @@ NUM_GEN = 5
 
 def main():
     visualizer = mnist.visualize
-    latent = np.random.uniform(size=(NUM_GEN, autoencoder.code_size))
+    latent = np.random.uniform(high=10, size=(NUM_GEN, autoencoder.code_size))
     with tf.Session() as sess:
         autoencoder.generate(sess, latent, visualizer)
 

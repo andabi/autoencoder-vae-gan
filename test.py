@@ -7,7 +7,7 @@ NUM_TEST = 1
 
 
 def main():
-    data = mnist.data.test
+    data = mnist.load_data().test
     visualizer = mnist.visualize
     with tf.Session() as sess:
         autoencoder.test(sess, data, visualizer, NUM_TEST)

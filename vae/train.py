@@ -1,0 +1,28 @@
+import mnist
+from model import *
+import os
+import shutil
+
+LR = 0.005
+BATCH_SIZE = 64
+FINAL_STEP = 10000
+CKPT_STEP = 10
+CKPT_PATH = 'checkpoints'
+RE_TRAIN = False
+
+
+def main():
+    if RE_TRAIN:
+        shutil.rmtree(CKPT_PATH)
+    if not os.path.exists(CKPT_PATH):
+        os.mkdir(CKPT_PATH)
+
+    model = VariationalAutoEncoder(X_SIZE, Z_SIZE, CKPT_PATH)
+    data = mnist.load_data().train
+
+    with tf.Session() as sess:
+        model.train(sess, data, FINAL_STEP, LR, BATCH_SIZE, CKPT_STEP)
+
+
+if __name__ == '__main__':
+    main()

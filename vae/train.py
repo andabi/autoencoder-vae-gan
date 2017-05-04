@@ -4,11 +4,11 @@ import os
 import shutil
 
 LR = 0.005
-BATCH_SIZE = 64
+BATCH_SIZE = 1024
 FINAL_STEP = 10000
 CKPT_STEP = 10
 CKPT_PATH = 'checkpoints'
-RE_TRAIN = False
+RE_TRAIN = True
 
 
 def main():

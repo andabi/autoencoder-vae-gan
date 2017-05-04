@@ -5,35 +5,38 @@ import tensorflow as tf
 import numpy as np
 
 X_SIZE = 784
-Z_SIZE = 100
-H_1_SIZE = 128
+Z_SIZE = 128
+H_1_SIZE = 256
 
 
 class VariationalAutoEncoder(object):
     def __init__(self, input_size, code_size, ckpt_path='checkpoints'):
-        self.input = tf.placeholder(tf.float32, shape=(None, input_size))
+        self.input = tf.placeholder(tf.float32, shape=[None, input_size], name='input')
         self.mu, self.log_var = self._encoder(self.input, code_size)
         self.code_size = code_size
-        self.code = tf.placeholder(tf.float32, shape=(None, code_size))
+        self.code = tf.placeholder(tf.float32, shape=[None, code_size], name='code')
         self.decoder = self._decoder(self.code, input_size)
         self.input_size = input_size
         self.ckpt_path = ckpt_path
 
     def _encoder(self, input, code_size):
-        out_1_encoder = fc(input, H_1_SIZE, w_init=xavier_init, b_init=tf.zeros)
-        mu, self.w_mu = fc_with_weight(out_1_encoder, code_size, w_init=xavier_init, b_init=tf.zeros)
-        log_var, self.w_var = fc_with_weight(out_1_encoder, code_size, w_init=xavier_init, b_init=tf.zeros)
-        return mu, log_var
+        with tf.name_scope('encoder'):
+            out_1_encoder = fc(input, H_1_SIZE, w_init=xavier_init, b_init=tf.zeros, name='out_1')
+            mu, self.w_mu = fc_with_weight(out_1_encoder, code_size, w_init=xavier_init, b_init=tf.zeros, name='mu')
+            log_var, self.w_var = fc_with_weight(out_1_encoder, code_size, w_init=xavier_init, b_init=tf.zeros, name='log_var')
+            return mu, log_var
 
     def _decoder(self, code, out_size):
-        out_1_decoder = fc(code, H_1_SIZE, w_init=xavier_init, b_init=tf.zeros)
-        out_decoder = fc(out_1_decoder, out_size, tf.nn.sigmoid, w_init=xavier_init, b_init=tf.zeros)
-        return out_decoder
+        with tf.name_scope('decoder'):
+            out_1_decoder = fc(code, H_1_SIZE, w_init=xavier_init, b_init=tf.zeros, name='out_1')
+            out_decoder = fc(out_1_decoder, out_size, tf.nn.sigmoid, w_init=xavier_init, b_init=tf.zeros, name='out')
+            return out_decoder
 
     def _loss(self):
-        data_loss = tf.reduce_sum(tf.square(self.input - self.decoder), axis=1)
-        kl_loss = 0.5 * tf.reduce_sum(tf.exp(self.log_var) + tf.square(self.mu) - 1. - self.log_var, axis=1)
-        return tf.reduce_mean(data_loss + kl_loss)
+        with tf.name_scope('loss'):
+            data_loss = tf.reduce_sum(tf.square(self.input - self.decoder), axis=1)
+            kl_loss = 0.5 * tf.reduce_sum(tf.exp(self.log_var) + tf.square(self.mu) - 1. - self.log_var, axis=1)
+            return tf.reduce_mean(data_loss + kl_loss)
 
     def _load(self, sess):
         sess.run(tf.global_variables_initializer())
@@ -42,8 +45,9 @@ class VariationalAutoEncoder(object):
             tf.train.Saver().restore(sess, ckpt.model_checkpoint_path)
 
     def _sample_code(self, mu, log_var, batch_size):
-        unit_gaussian = tf.random_normal((batch_size, self.code_size))
-        return mu + tf.exp(log_var / 2) * unit_gaussian
+        with tf.name_scope('sample_code'):
+            unit_gaussian = tf.random_normal((batch_size, self.code_size), name='unit_gaussian')
+            return mu + tf.exp(log_var / 2) * unit_gaussian
 
     def train(self, sess, data, final_step, lr, batch_size, ckpt_step=1):
         loss = self._loss()

@@ -18,6 +18,7 @@ class VariationalAutoEncoder(object):
         self.decoder = self._decoder(self.code, input_size)
         self.input_size = input_size
         self.ckpt_path = ckpt_path
+        self.loss = self._loss()
 
     def _encoder(self, input, code_size):
         with tf.name_scope('encoder'):
@@ -36,7 +37,7 @@ class VariationalAutoEncoder(object):
         with tf.name_scope('loss'):
             data_loss = tf.reduce_sum(tf.square(self.input - self.decoder), axis=1)
             kl_loss = 0.5 * tf.reduce_sum(tf.exp(self.log_var) + tf.square(self.mu) - 1. - self.log_var, axis=1)
-            return tf.reduce_mean(data_loss + kl_loss)
+            return tf.reduce_mean(data_loss + kl_loss, name='loss')
 
     def _load(self, sess):
         sess.run(tf.global_variables_initializer())
@@ -50,11 +51,10 @@ class VariationalAutoEncoder(object):
             return mu + tf.exp(log_var / 2) * unit_gaussian
 
     def train(self, sess, data, final_step, lr, batch_size, ckpt_step=1):
-        loss = self._loss()
         global_step = tf.Variable(0, dtype=tf.int32, trainable=False, name='global_step')
-        optimizer = tf.train.AdamOptimizer(learning_rate=lr).minimize(loss, global_step=global_step)
+        optimizer = tf.train.AdamOptimizer(learning_rate=lr).minimize(self.loss, global_step=global_step)
 
-        grad_loss = tf.gradients(loss, [self.w_mu, self.w_var])
+        grad_loss = tf.gradients(self.loss, [self.w_mu, self.w_var])
 
         self._load(sess)
 
@@ -63,15 +63,15 @@ class VariationalAutoEncoder(object):
             input_batch, _ = data.next_batch(batch_size)
             # mu, log_var = sess.run([self.mu, self.log_var], feed_dict={self.input: input_batch})
             code = sess.run(self._sample_code(self.mu, self.log_var, batch_size), feed_dict={self.input: input_batch})
-            _, curr_loss, g_loss = sess.run([optimizer, loss, grad_loss], feed_dict={self.input: input_batch, self.code: code})
+            _, loss, g_loss = sess.run([optimizer, self.loss, grad_loss], feed_dict={self.input: input_batch, self.code: code})
 
             if (step + 1) % ckpt_step == 0:
                 if prev_loss:
-                    d_loss = (curr_loss / prev_loss - 1)
-                prev_loss = curr_loss
+                    d_loss = (loss / prev_loss - 1)
+                prev_loss = loss
 
                 tf.train.Saver().save(sess, self.ckpt_path + '/vae', global_step=step)
-                print 'step-{}\td_loss={:2.2f}%\tloss={}\tgrad_loss={}'.format(step, d_loss * 100, curr_loss,
+                print 'step-{}\td_loss={:2.2f}%\tloss={}\tgrad_loss={}'.format(step, d_loss * 100, loss,
                                                                                    [np.linalg.norm(grad) for grad in
                                                                                     g_loss])
 
@@ -90,8 +90,8 @@ class VariationalAutoEncoder(object):
 
     def generate(self, sess, visualizer, num=2):
         self._load(sess)
-        mu = tf.zeros(shape=(num, self.code_size), dtype=tf.float32)
-        log_var = tf.zeros(shape=(num, self.code_size), dtype=tf.float32)
+        mu = tf.zeros(shape=(num, self.code_size), dtype=tf.float32, name='mu')
+        log_var = tf.zeros(shape=(num, self.code_size), dtype=tf.float32, name='log_var')
         code = sess.run(self._sample_code(mu, log_var, num))
         print code
         out = sess.run(self.decoder, feed_dict={self.code: code})

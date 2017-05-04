@@ -21,8 +21,9 @@ def main():
     data = mnist.load_data().train
 
     with tf.Session() as sess:
+        writer = tf.summary.FileWriter('./graph', sess.graph)
         model.train(sess, data, FINAL_STEP, LR, BATCH_SIZE, CKPT_STEP)
-
+        writer.close()
 
 if __name__ == '__main__':
     main()

@@ -45,9 +45,6 @@ class VariationalAutoEncoder(object):
         unit_gaussian = tf.random_normal((batch_size, self.code_size))
         return mu + tf.exp(log_var / 2) * unit_gaussian
 
-    # writer = tf.summary.FileWriter('./graph', sess.graph)
-    # writer.close()
-
     def train(self, sess, data, final_step, lr, batch_size, ckpt_step=1):
         loss = self._loss()
         global_step = tf.Variable(0, dtype=tf.int32, trainable=False, name='global_step')

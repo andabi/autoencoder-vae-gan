@@ -3,7 +3,7 @@ from model import *
 import os
 import shutil
 
-LR = 0.001
+LR = 0.005
 BATCH_SIZE = 256
 FINAL_STEP = 10000
 CKPT_STEP = 100

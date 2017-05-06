@@ -1,7 +1,6 @@
 training
 - z의 랜덤성 때문에 학습이 쉽지 않음.
 - BN
-- sigma를 1로 fix
 
 batch_norm 적용 전후에 따른 변화 확인
 - tensorboard loss graph

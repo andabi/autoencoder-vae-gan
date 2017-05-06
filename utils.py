@@ -1,18 +1,20 @@
 import tensorflow as tf
 
 
-def fc(input, num_out, activation=tf.nn.relu, w_init=tf.zeros, b_init=tf.random_normal, name='fc_layer'):
-    layer, w = fc_with_weight(input, num_out, activation, w_init, b_init, name)
+def fc(input, num_out, is_training, activation=tf.nn.relu, w_init=tf.zeros, b_init=tf.random_normal, name='fc_layer'):
+    layer, w = fc_with_weight(input, num_out, is_training, activation, w_init, b_init, name)
     return layer
 
 
-def fc_with_weight(input, num_out, activation=tf.nn.relu, w_init=tf.zeros, b_init=tf.random_normal, name='fc_layer'):
+def fc_with_weight(input, num_out, is_training, act=tf.nn.relu, w_init=tf.zeros, b_init=tf.random_normal,
+                   name='fc_layer'):
     with tf.name_scope(name):
         _, num_input = shape(input)
         w = tf.Variable(w_init(shape=(num_input, num_out)), name='weights')
         b = tf.Variable(b_init(shape=(1, num_out)), name='biases')
-        u = tf.matmul(input, w) + b
-        return activation(u), w
+        h1 = tf.matmul(input, w) + b
+        h2 = tf.contrib.layers.batch_norm(h1, center=True, scale=True, is_training=is_training)
+        return act(h2), w
 
 
 def shape(tensor):

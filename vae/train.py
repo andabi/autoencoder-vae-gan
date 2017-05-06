@@ -3,8 +3,8 @@ from model import *
 import os
 import shutil
 
-LR = 0.005
-BATCH_SIZE = 1024
+LR = 0.05
+BATCH_SIZE = 256
 FINAL_STEP = 10000
 CKPT_STEP = 10
 CKPT_PATH = 'checkpoints'

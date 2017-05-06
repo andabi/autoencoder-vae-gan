@@ -3,12 +3,12 @@ from model import *
 import os
 import shutil
 
-LR = 0.001
+LR = 0.01
 BATCH_SIZE = 256
-FINAL_STEP = 10000
+FINAL_STEP = 2000
 CKPT_STEP = 100
 CKPT_PATH = 'checkpoints'
-RE_TRAIN = False
+RE_TRAIN = True
 
 
 def main():
@@ -21,8 +21,8 @@ def main():
     data = mnist.load_data().train
 
     with tf.Session() as sess:
-        writer = tf.summary.FileWriter('./graph', sess.graph)
-        model.train(sess, data, FINAL_STEP, LR, BATCH_SIZE, CKPT_STEP)
+        writer = tf.summary.FileWriter('./graphs', sess.graph)
+        model.train(sess, data, FINAL_STEP, LR, BATCH_SIZE, writer, CKPT_STEP)
         writer.close()
 
 if __name__ == '__main__':

@@ -1,7 +1,7 @@
 import mnist
 from model import *
 
-NUM_GEN = 100
+NUM_GEN = 10
 
 
 def main():

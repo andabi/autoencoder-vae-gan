@@ -20,7 +20,7 @@ class AutoEncoder(object):
         if ckpt and ckpt.model_checkpoint_path:
             self.saver.restore(sess, ckpt.model_checkpoint_path)
 
-    # writer = tf.summary.FileWriter('./graph', sess.graph)
+    # writer = tf.summary.FileWriter('./graphs', sess.graphs)
     # writer.close()
 
     def train(self, sess, data, final_step, lr, batch_size, ckpt_step=1):

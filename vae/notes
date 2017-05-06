@@ -1,5 +1,12 @@
 training
 - z의 랜덤성 때문에 학습이 쉽지 않음.
+- BN
+- sigma를 1로 fix
+
+batch_norm 적용 전후에 따른 변화 확인
+- tensorboard loss graph
 
 reparameterization 유무에 따른 차이 확인
-generation 잘되는거 확인. z가 mean에 가까워질수록 잘 생성되는가? z변화별 생성 추이, visualization (t-SNE?)
+
+generation 잘되는거 확인. z가 mean에 가까워질수록 잘 생성되는가? z변화별 생성 추이
+- visualization (t-SNE?)

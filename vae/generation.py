@@ -1,12 +1,12 @@
 import mnist
 from model import *
 
-NUM_GEN = 10
+NUM_GEN = 100
 
 
 def main():
     visualizer = mnist.visualize
-    model = VariationalAutoEncoder(X_SIZE, Z_SIZE)
+    model = VariationalAutoEncoder()
 
     with tf.Session() as sess:
         model.generate(sess, visualizer, NUM_GEN)

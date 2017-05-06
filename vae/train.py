@@ -3,12 +3,12 @@ from model import *
 import os
 import shutil
 
-LR = 0.05
+LR = 0.001
 BATCH_SIZE = 256
 FINAL_STEP = 10000
-CKPT_STEP = 10
+CKPT_STEP = 100
 CKPT_PATH = 'checkpoints'
-RE_TRAIN = True
+RE_TRAIN = False
 
 
 def main():

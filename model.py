@@ -1,6 +1,6 @@
 import os
 
-from utils import fc, fc_with_weight
+from utils import fc, fc_with_variables
 import tensorflow as tf
 
 
@@ -82,21 +82,21 @@ H_2_SIZE = 256
 
 
 def _encoder(input, code_size):
-    out_1_encoder, w_1_encoder = fc_with_weight(input, H_1_SIZE)
+    out_1_encoder, w_1_encoder = fc_with_variables(input, H_1_SIZE)
     # out_2_encoder = fc(out_1_encoder, H_1_SIZE)
     # out_3_encoder = fc(out_2_encoder, H_2_SIZE)
     # out_4_encoder = fc(out_3_encoder, H_2_SIZE)
-    out_5_encoder, w_5_encoder = fc_with_weight(out_1_encoder, code_size)
+    out_5_encoder, w_5_encoder = fc_with_variables(out_1_encoder, code_size)
     out_encoder = fc(out_5_encoder, code_size)
     return out_encoder
 
 
 def _decoder(code, code_size, out_size):
-    out_1_decoder, w_1_decoder = fc_with_weight(code, code_size)
+    out_1_decoder, w_1_decoder = fc_with_variables(code, code_size)
     # out_2_decoder = fc(out_1_decoder, H_2_SIZE)
     # out_3_decoder = fc(out_2_decoder, H_2_SIZE)
     # out_4_decoder = fc(out_3_decoder, H_1_SIZE)
-    out_5_decoder, w_5_decoder = fc_with_weight(out_1_decoder, H_1_SIZE)
+    out_5_decoder, w_5_decoder = fc_with_variables(out_1_decoder, H_1_SIZE)
     out_decoder = fc(out_5_decoder, out_size, tf.nn.sigmoid)
     return out_decoder
 

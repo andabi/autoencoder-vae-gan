@@ -5,8 +5,5 @@ training
 batch_norm 적용 전후에 따른 변화 확인
 - tensorboard loss graph
 
-reparameterization 유무에 따른 차이 확인
-- loss 추이, 학습 시간 모두 유사
-
 generation 잘되는거 확인. z가 mean에 가까워질수록 잘 생성되는가? z변화별 생성 추이
 - visualization (t-SNE?)

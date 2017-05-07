@@ -51,9 +51,7 @@ class VariationalAutoEncoder(object):
     def _sample_code(self, mu, log_var, batch_size):
         with tf.name_scope('sample_code'):
             sigma = tf.exp(log_var / 2)
-            # code = tf.random_normal((batch_size, self.code_size), mean=mu, stddev=sigma, name='unit_gaussian')
-            unit_gaussian = tf.random_normal((batch_size, self.code_size), name='unit_gaussian')
-            code = mu + sigma * unit_gaussian
+            code = tf.random_normal((batch_size, self.code_size), mean=mu, stddev=sigma)
             return code
 
     def train(self, sess, data, final_step, lr, batch_size, writer, ckpt_step=1):

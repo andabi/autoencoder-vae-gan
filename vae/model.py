@@ -98,4 +98,5 @@ class VariationalAutoEncoder(object):
         code = sess.run(self._sample_code(mu, log_var, num))
         # print code
         out = sess.run(self.decoder, feed_dict={self.code: code, self.is_training: False})
+        # out = sess.run(self.decoder, feed_dict={self.mu: mu, self.log_var: log_var, self.batch_size: num, self.is_training: False})
         return out

@@ -2,3 +2,5 @@
 checkpoints/
 data/
 *.pyc
+.DS_Store
+graphs/

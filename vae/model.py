@@ -5,7 +5,7 @@ import tensorflow as tf
 import numpy as np
 
 X_SIZE = 784
-Z_SIZE = 256
+Z_SIZE = 128
 H_1_SIZE = 256
 
 
@@ -91,10 +91,10 @@ class VariationalAutoEncoder(object):
         out = sess.run(self.decoder, feed_dict={self.mu: mu, self.log_var: log_var, self.is_training: False, self.batch_size: batch_size})
         return out
 
-    def generate(self, sess, num=2):
+    def generate(self, sess, mu=0, log_var=0, num=1):
         self._load(sess)
-        mu = tf.zeros(shape=(num, self.code_size), dtype=tf.float32, name='mu')
-        log_var = tf.zeros(shape=(num, self.code_size), dtype=tf.float32, name='log_var')
+        mu = tf.constant(mu, shape=(num, self.code_size), dtype=tf.float32, name='mu')
+        log_var = tf.constant(log_var, shape=(num, self.code_size), dtype=tf.float32, name='log_var')
         code = sess.run(self._sample_code(mu, log_var, num))
         # print code
         out = sess.run(self.decoder, feed_dict={self.code: code, self.is_training: False})

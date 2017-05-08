@@ -3,12 +3,13 @@ from model import *
 import os
 import shutil
 
-LR = 0.01
+CODE_SIZE = 128
+LR = 0.005
 BATCH_SIZE = 256
-FINAL_STEP = 2000
+FINAL_STEP = 10000
 CKPT_STEP = 100
-CKPT_PATH = 'checkpoints'
-RE_TRAIN = True
+CKPT_PATH = 'checkpoints/code_' + str(CODE_SIZE)
+RE_TRAIN = False
 
 
 def main():
@@ -17,7 +18,7 @@ def main():
     if not os.path.exists(CKPT_PATH):
         os.mkdir(CKPT_PATH)
 
-    model = VariationalAutoEncoder(X_SIZE, Z_SIZE, CKPT_PATH)
+    model = VariationalAutoEncoder(code_size=CODE_SIZE, ckpt_path=CKPT_PATH)
     data = mnist.load_data().train
 
     with tf.Session() as sess:

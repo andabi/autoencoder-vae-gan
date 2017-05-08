@@ -1,16 +1,20 @@
 import mnist
 from model import *
 
-NUM_TEST = 3
+NUM_TEST = 10
+CODE_SIZE = 128
+CKPT_PATH = 'checkpoints/code_' + str(CODE_SIZE)
 
 
 def main():
     data = mnist.load_data().test
-    visualizer = mnist.visualize
-    model = VariationalAutoEncoder(X_SIZE, Z_SIZE)
+    model = VariationalAutoEncoder(code_size=CODE_SIZE, ckpt_path=CKPT_PATH)
 
     with tf.Session() as sess:
-        model.test(sess, data, visualizer, NUM_TEST)
+        x, _ = data.next_batch(NUM_TEST)
+        x_ = model.reconstruct(sess, x)
+
+    mnist.visualize_comp(x, x_)
 
 
 if __name__ == '__main__':

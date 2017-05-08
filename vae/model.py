@@ -5,15 +5,15 @@ import tensorflow as tf
 import numpy as np
 
 X_SIZE = 784
-Z_SIZE = 128
+Z_SIZE = 256
 H_1_SIZE = 256
 
 
 class VariationalAutoEncoder(object):
     def __init__(self, input_size=X_SIZE, code_size=Z_SIZE, ckpt_path='checkpoints'):
         self.is_training = tf.placeholder(tf.bool)
-        self.batch_size = tf.placeholder(tf.int32)
         self.input = tf.placeholder(tf.float32, shape=(None, input_size), name='input')
+        self.batch_size = tf.placeholder(tf.int32)
         self.mu, self.log_var = self._encoder(self.input, code_size)
         self.code_size = code_size
         self.code = self._sample_code(self.mu, self.log_var, self.batch_size)
@@ -83,25 +83,19 @@ class VariationalAutoEncoder(object):
                 # print 'grad_loss={}, grad_encoder={}'.format(g_loss, g_encoder)
                 writer.add_summary(summary, global_step=step)
 
-    def test(self, sess, data, visualizer, num=2):
-        x, _ = data.next_batch(num)
-        for o in x:
-            visualizer(o)
-
+    def reconstruct(self, sess, input):
         self._load(sess)
-        mu, log_var = sess.run([self.mu, self.log_var], feed_dict={self.input: x, self.is_training: False})
-        print '<mu>\n{}\n\n<log_var>\n{}'.format(mu, log_var)
+        batch_size = input.shape[0]
+        mu, log_var = sess.run([self.mu, self.log_var], feed_dict={self.input: input, self.is_training: False, self.batch_size: batch_size})
+        # print '<mu>\n{}\n\n<log_var>\n{}'.format(mu, log_var)
+        out = sess.run(self.decoder, feed_dict={self.mu: mu, self.log_var: log_var, self.is_training: False, self.batch_size: batch_size})
+        return out
 
-        out = sess.run(self.decoder, feed_dict={self.mu: mu, self.log_var: log_var, self.is_training: False})
-        for o in out:
-            visualizer(o)
-
-    def generate(self, sess, visualizer, num=2):
+    def generate(self, sess, num=2):
         self._load(sess)
         mu = tf.zeros(shape=(num, self.code_size), dtype=tf.float32, name='mu')
         log_var = tf.zeros(shape=(num, self.code_size), dtype=tf.float32, name='log_var')
         code = sess.run(self._sample_code(mu, log_var, num))
-        print code
+        # print code
         out = sess.run(self.decoder, feed_dict={self.code: code, self.is_training: False})
-        for o in out:
-            visualizer(o)
+        return out

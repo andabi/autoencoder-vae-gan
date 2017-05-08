@@ -2,16 +2,15 @@ from utils import *
 import tensorflow as tf
 import mnist
 from model import autoencoder
-import numpy as np
 
 NUM_GEN = 5
 
 
 def main():
-    visualizer = mnist.visualize
-    latent = np.random.uniform(high=10, size=(NUM_GEN, autoencoder.code_size))
     with tf.Session() as sess:
-        autoencoder.generate(sess, latent, visualizer)
+        out = autoencoder.generate(sess, NUM_GEN)
+
+    mnist.visualize_n(out)
 
 
 if __name__ == '__main__':

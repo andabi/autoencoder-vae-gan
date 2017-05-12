@@ -24,15 +24,15 @@ class VariationalAutoEncoder(object):
 
     def _encoder(self, input, code_size):
         with tf.name_scope('encoder'):
-            out_1_encoder = fc(input, H_1_SIZE, self.is_training, name='out_1')
+            out_1_encoder = fc_bn(input, H_1_SIZE, self.is_training, name='out_1')
             mu, self.w_mu, _, _,  self.h2_mu = fc_with_variables(out_1_encoder, code_size, self.is_training, name='mu', act=tf.tanh, w_init=tf.zeros)
             log_var, self.w_var, _, _, self.h2_var = fc_with_variables(out_1_encoder, code_size, self.is_training, name='log_var', act=tf.tanh, w_init=tf.zeros)
             return mu, log_var
 
     def _decoder(self, code, out_size):
         with tf.name_scope('decoder'):
-            out_1_decoder = fc(code, H_1_SIZE, self.is_training, name='out_1')
-            out_decoder = fc(out_1_decoder, out_size, self.is_training, tf.nn.sigmoid, name='out')
+            out_1_decoder = fc_bn(code, H_1_SIZE, self.is_training, name='out_1')
+            out_decoder = fc_bn(out_1_decoder, out_size, self.is_training, tf.nn.sigmoid, name='out')
             return out_decoder
 
     def _loss(self):

@@ -10,14 +10,24 @@ def get_scope_variable(var, shape, initializer):
     return v
 
 
-def fc(name, input, num_out, is_training, act=tf.nn.relu, w_init=tf.random_normal_initializer,
-       b_init=tf.zeros_initializer):
-    layer, w, b, h1, h2 = fc_with_variables(name, input, num_out, is_training, act, w_init, b_init)
+def fc(name, input, num_out, act=tf.nn.relu, w_init=tf.contrib.layers.xavier_initializer(),
+             b_init=tf.zeros_initializer):
+    _, num_input = shape(input)
+    with tf.variable_scope(name):
+        w = get_scope_variable('weights', (num_input, num_out), w_init)
+        b = get_scope_variable('biases', (1, num_out), b_init)
+        h = tf.matmul(input, w) + b
+    return act(h)
+
+
+def fc_bn(name, input, num_out, act=tf.nn.relu, w_init=tf.random_normal_initializer,
+          b_init=tf.zeros_initializer, is_training=False):
+    layer, w, b, h1, h2 = fc_with_variables(name, input, num_out, act, w_init, b_init, is_training)
     return layer
 
 
-def fc_with_variables(name, input, num_out, is_training, act=tf.nn.relu, w_init=tf.random_normal_initializer,
-                      b_init=tf.zeros_initializer):
+def fc_with_variables(name, input, num_out, act=tf.nn.relu, w_init=tf.random_normal_initializer,
+                      b_init=tf.zeros_initializer, is_training=False):
     _, num_input = shape(input)
     with tf.variable_scope(name) as scope:
         w = get_scope_variable('weights', (num_input, num_out), w_init)

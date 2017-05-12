@@ -1,6 +1,6 @@
 import os
 
-from utils import fc, fc_with_variables
+from utils import fc_bn, fc_with_variables
 import tensorflow as tf
 
 
@@ -87,7 +87,7 @@ def _encoder(input, code_size):
     # out_3_encoder = fc(out_2_encoder, H_2_SIZE)
     # out_4_encoder = fc(out_3_encoder, H_2_SIZE)
     out_5_encoder, w_5_encoder = fc_with_variables(out_1_encoder, code_size)
-    out_encoder = fc(out_5_encoder, code_size)
+    out_encoder = fc_bn(out_5_encoder, code_size)
     return out_encoder
 
 
@@ -97,7 +97,7 @@ def _decoder(code, code_size, out_size):
     # out_3_decoder = fc(out_2_decoder, H_2_SIZE)
     # out_4_decoder = fc(out_3_decoder, H_1_SIZE)
     out_5_decoder, w_5_decoder = fc_with_variables(out_1_decoder, H_1_SIZE)
-    out_decoder = fc(out_5_decoder, out_size, tf.nn.sigmoid)
+    out_decoder = fc_bn(out_5_decoder, out_size, tf.nn.sigmoid)
     return out_decoder
 
 

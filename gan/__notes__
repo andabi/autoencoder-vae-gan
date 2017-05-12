@@ -1,2 +1,5 @@
+tf.contrib.batch_norm 이해하여 올바르게 적용시키기
+sugartensor보기, variable별 gradient 보기
 gpu 사용하기
+--
 CIFAR-10 사용하기

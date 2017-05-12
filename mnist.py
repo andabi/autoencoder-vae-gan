@@ -3,8 +3,8 @@ import matplotlib.pyplot as plt
 from tensorflow.examples.tutorials.mnist import input_data
 
 
-def load_data():
-    return input_data.read_data_sets('data/mnist', one_hot=True)
+def load_data(path='../data/mnist'):
+    return input_data.read_data_sets(path, one_hot=True)
 
 
 def visualize(input):

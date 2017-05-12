@@ -44,12 +44,6 @@ class Diff(object):
         self.value = v
         self.diff = 0.
 
-    def value(self):
-        return self.value
-
-    def diff(self):
-        return self.diff
-
     def update(self, v):
         if self.value:
             diff = (v / self.value - 1)

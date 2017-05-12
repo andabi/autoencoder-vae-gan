@@ -15,9 +15,9 @@ class Generator(object):
 
     def _net(self, z):
         H_SIZE = 256
-
-        out_1 = fc(z, H_SIZE, self.is_training)
-        x = fc(out_1, X_SIZE, self.is_training, act=tf.nn.sigmoid)
+        with tf.variable_scope('gen'):
+            out_1 = fc('out_1', z, H_SIZE, self.is_training)
+            x = fc('x', out_1, X_SIZE, self.is_training, act=tf.nn.sigmoid)
         return x
 
     def generate(self, sess, z):
@@ -33,9 +33,9 @@ class Discriminator(object):
 
     def _net(self, x):
         H_SIZE = 256
-
-        out_1 = fc(x, H_SIZE, self.is_training)
-        d = fc(out_1, 1, self.is_training, act=tf.nn.sigmoid)
+        with tf.variable_scope('disc'):
+            out_1 = fc('out_1', x, H_SIZE, self.is_training)
+            d = fc('out', out_1, 1, self.is_training, act=tf.nn.sigmoid)
         return d
 
     def discriminate(self, sess, x):

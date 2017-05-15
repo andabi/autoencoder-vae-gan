@@ -3,13 +3,13 @@ from model import *
 import os
 import shutil
 
-CODE_SIZE = 2
-LR = 1e-2
-BATCH_SIZE = 64
-FINAL_STEP = 100
-CKPT_STEP = 10
+CODE_SIZE = 128
+LR = 1e-3
+BATCH_SIZE = 256
+FINAL_STEP = 3000
+CKPT_STEP = 100
 CKPT_PATH = 'checkpoints/code_' + str(CODE_SIZE)
-RE_TRAIN = False
+RE_TRAIN = True
 
 
 def main():

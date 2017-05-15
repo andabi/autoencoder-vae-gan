@@ -33,7 +33,7 @@ def fc_with_variables(name, input, num_out, act=tf.nn.relu, w_init=tf.random_nor
         w = get_scope_variable('weights', (num_input, num_out), w_init)
         b = get_scope_variable('biases', (1, num_out), b_init)
         h1 = tf.matmul(input, w) + b
-        h2 = tf.contrib.layers.batch_norm(h1, center=True, scale=True, is_training=is_training, scope=scope,
+        h2 = tf.contrib.layers.batch_norm(h1, center=True, scale=True, is_training=is_training, scope='bn',
                                           reuse=scope.reuse)
     return act(h2), w, b, h1, h2
 

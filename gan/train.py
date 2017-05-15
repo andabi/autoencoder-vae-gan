@@ -25,10 +25,9 @@ def main():
     data = mnist.load_data().train
 
     with tf.Session() as sess:
+
         writer = tf.summary.FileWriter('./graphs', sess.graph)
         gd.train(sess, data, FINAL_STEP, LR, BATCH_SIZE, writer, ckpt_step=CKPT_STEP, k_disc=1)
-        x = gd.generate(sess, 3)
-        mnist.visualize_n(x)
         writer.close()
 
 if __name__ == '__main__':

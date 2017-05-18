@@ -1,4 +1,3 @@
-sugartensor보기, variable별 gradient 보기
-gpu 사용하기
+sugartensor보기(tflearn), variable별 gradient 보기
 --
 CIFAR-10 사용하기

@@ -44,6 +44,10 @@ def xavier_init(shape):
     return tf.random_normal(shape=shape, stddev=xavier_stddev)
 
 
+def leaky_relu(x):
+    return tf.maximum(x, 0.01 * x)
+
+
 def shape(tensor):
     s = tensor.get_shape()
     return tuple([s[i].value for i in range(0, len(s))])

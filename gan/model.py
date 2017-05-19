@@ -14,17 +14,39 @@ class Generator(object):
         self.z = tf.placeholder(tf.float32, (batch_size, code_size), name='z')
         self()
 
+    # def __call__(self):
+    #     H_SIZE = 128
+    #     H2_SIZE = 256
+    #     H3_SIZE = 512
+    #     with tf.variable_scope('gen'):
+    #         out_1 = fc_bn('out_1', self.z, H_SIZE, act=leaky_relu, is_training=self.is_training)
+    #         out_2 = fc_bn('out_2', out_1, H2_SIZE, act=leaky_relu, is_training=self.is_training)
+    #         out_3 = fc_bn('out_3', out_2, H3_SIZE, act=leaky_relu, is_training=self.is_training)
+    #         # out_4 = fc_bn('out_4', out_3, H3_SIZE, is_training=self.is_training)
+    #         # out_5 = fc_bn('out_5', out_4, H3_SIZE, is_training=self.is_training)
+    #         x = fc('x', out_3, X_SIZE, act=tf.nn.sigmoid)
+    #     return x
+
+
     def __call__(self):
-        H_SIZE = 128
-        H2_SIZE = 256
-        H3_SIZE = 512
+        H_SIZE = 32
+        H2_SIZE = 128
+        H3_SIZE = 169
+        batch_size = shape(self.z)[0]
         with tf.variable_scope('gen'):
-            out_1 = fc_bn('out_1', self.z, H_SIZE, is_training=self.is_training)
-            out_2 = fc_bn('out_2', out_1, H2_SIZE, is_training=self.is_training)
-            out_3 = fc_bn('out_3', out_2, H3_SIZE, is_training=self.is_training)
-            # out_4 = fc_bn('out_4', out_3, H3_SIZE, is_training=self.is_training)
-            # out_5 = fc_bn('out_5', out_4, H3_SIZE, is_training=self.is_training)
-            x = fc_bn('x', out_3, X_SIZE, act=tf.nn.sigmoid, is_training=self.is_training)
+            out_1 = fc_bn('out_1', self.z, H_SIZE, act=leaky_relu, is_training=self.is_training)
+            out_2 = fc_bn('out_2', out_1, H2_SIZE, act=leaky_relu, is_training=self.is_training)
+            out_3 = fc_bn('out_3', out_2, H3_SIZE, act=leaky_relu, is_training=self.is_training)
+            out_3 = tf.reshape(out_3, [batch_size, 13, 13, 1])
+            out_4 = conv2d_transpose_bn('out_4', out_3, filter=[6, 6, 10, 1], output_shape=[batch_size, 18, 18, 10],
+                                        strides=[1, 1, 1, 1], padding='VALID',
+                                        act=leaky_relu, is_training=self.is_training)
+            out_5 = conv2d_transpose_bn('out_5', out_4, filter=[6, 6, 10, 10], output_shape=[batch_size, 23, 23, 10],
+                                        strides=[1, 1, 1, 1], padding='VALID',
+                                        act=leaky_relu, is_training=self.is_training)
+            x = conv2d_transpose('x', out_5, filter=[6, 6, 1, 10], output_shape=[batch_size, 28, 28, 1],
+                                 strides=[1, 1, 1, 1], padding='VALID',
+                                 act=tf.nn.sigmoid)
         return x
 
 
@@ -35,18 +57,25 @@ class Discriminator(object):
         self()
 
     def __call__(self, x=None):
-        H_SIZE = 512
-        H2_SIZE = 256
-        H3_SIZE = 128
+        H_SIZE = 128
+        H2_SIZE = 32
+        H3_SIZE = 16
         if x is None:
             x = self.x
+        batch_size = shape(x)[0]
         with tf.variable_scope('disc'):
-            out_1 = fc_bn('out_1', x, H_SIZE, act=leaky_relu, is_training=self.is_training)
-            out_2 = fc_bn('out_2', out_1, H2_SIZE, act=leaky_relu, is_training=self.is_training)
-            out_3 = fc_bn('out_3', out_2, H3_SIZE, act=leaky_relu, is_training=self.is_training)
-            # out_4 = fc_bn('out_4', out_3, H3_SIZE, act=leaky_relu, is_training=self.is_training)
+            x = tf.reshape(x, [batch_size, 28, 28, 1])
+            out_1 = conv2d_bn('out_1', x, filter=[6, 6, 1, 10], strides=[1, 1, 1, 1], padding='VALID', act=leaky_relu,
+                              is_training=self.is_training)
+            out_2 = conv2d_bn('out_2', out_1, filter=[6, 6, 10, 10], strides=[1, 1, 1, 1], padding='VALID',
+                              act=leaky_relu, is_training=self.is_training)
+            out_3 = conv2d_bn('out_3', out_2, filter=[6, 6, 10, 1], strides=[1, 1, 1, 1], padding='VALID',
+                              act=leaky_relu, is_training=self.is_training)
+            out_3 = tf.reshape(out_3, [batch_size, 169])
+            out_4 = fc_bn('out_4', out_3, H_SIZE, act=leaky_relu, is_training=self.is_training)
+            out_5 = fc_bn('out_5', out_4, H2_SIZE, act=leaky_relu, is_training=self.is_training)
             # out_5 = fc_bn('out_5', out_4, H3_SIZE, act=leaky_relu, is_training=self.is_training)
-            d = fc_bn('out', out_3, 1, act=leaky_relu, is_training=self.is_training)
+            d = fc('out', out_5, 1, act=tf.nn.sigmoid)
         return d
 
 
@@ -56,23 +85,24 @@ class GD(object):
         self.gen = gen
         self.disc = disc
 
-    def _loss_disc(self, batch_size):
-        loss_real = tf.nn.sigmoid_cross_entropy_with_logits(labels=tf.ones((batch_size, 1)), logits=self.disc())
-        loss_fake = tf.nn.sigmoid_cross_entropy_with_logits(labels=tf.zeros((batch_size, 1)),
-                                                            logits=self.disc(self.gen()))
-        loss = 0.5 * tf.reduce_mean(loss_real + loss_fake)
-        return loss
+    # def _loss_disc(self, batch_size):
+    #     loss_real = tf.nn.sigmoid_cross_entropy_with_logits(labels=tf.ones((batch_size, 1)), logits=self.disc())
+    #     loss_fake = tf.nn.sigmoid_cross_entropy_with_logits(labels=tf.zeros((batch_size, 1)),
+    #                                                         logits=self.disc(self.gen()))
+    #     loss = 0.5 * tf.reduce_mean(loss_real + loss_fake)
+    #     return loss
 
     def _loss_gen(self, batch_size):
-        loss = tf.nn.sigmoid_cross_entropy_with_logits(labels=tf.ones((batch_size, 1)),
-                                                       logits=self.disc(self.gen()))
+        # loss = tf.nn.sigmoid_cross_entropy_with_logits(labels=tf.ones((batch_size, 1)),
+        #                                                logits=self.disc(self.gen()))
+        loss = -tf.log(self.disc(self.gen()))
         return tf.reduce_mean(loss)
 
-    # def _loss_disc(self):
-    #     loss_real = tf.log(self.disc())
-    #     loss_fake = tf.log(1. - self.disc(self.x_fake))
-    #     loss = -1. * tf.reduce_mean(loss_real + loss_fake)
-    #     return loss
+    def _loss_disc(self, batch_size):
+        loss_real = -tf.log(self.disc())
+        loss_fake = -tf.log(1. - self.disc(self.gen()))
+        loss = 0.5 * (loss_real + loss_fake)
+        return tf.reduce_mean(loss)
 
     def _load(self, sess):
         ckpt = tf.train.get_checkpoint_state(os.path.dirname(self.ckpt_path + '/checkpoint'))
@@ -140,6 +170,14 @@ class GD(object):
                                                                                                              loss_disc.diff * 100,
                                                                                                              loss_gen.value,
                                                                                                              loss_disc.value)
+
+                x = sess.run(self.gen(),
+                             feed_dict={self.gen.z: self.sample_noise(batch_size), self.gen.is_training: False})
+                x = tf.reshape(x, [batch_size, 28, 28, 1])
+                image_summary = tf.summary.image('generated_image', x, 1)
+                summary = sess.run(image_summary)
+                writer.add_summary(summary, global_step=step)
+
                 # print 'grad_loss={}, grad_encoder={}'.format(g_loss, g_encoder)
                 # writer.add_summary([summary_loss_gen, summary_loss_disc], global_step=step)
 

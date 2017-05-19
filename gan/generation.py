@@ -3,7 +3,7 @@ from model import *
 import numpy as np
 import tensorflow as tf
 
-NUM_GEN = 10
+NUM_GEN = 5
 CODE_SIZE = 50
 CKPT_PATH = 'checkpoints/code_' + str(CODE_SIZE)
 
@@ -25,18 +25,18 @@ def main():
 
         x = np.random.normal(0, 1, (NUM_GEN, X_SIZE))
         d = gd.discriminate(sess, x)
-        print 'random_image\t{}'.format(np.mean(d))
+        print 'random_image\tmean:{:2.4f}\tstd:{:2.4f}\n{}'.format(np.mean(d), np.std(d), d)
 
         x, _ = data.next_batch(NUM_GEN)
         d = gd.discriminate(sess, x)
-        print 'real_image\t{}'.format(np.mean(d))
+        print 'real_image\tmean:{:2.4f}\tstd:{:2.4f}\n{}'.format(np.mean(d), np.std(d), d)
 
         x = gd.generate(sess, NUM_GEN)
         d = gd.discriminate(sess, x)
-        print 'fake_image\t{}'.format(np.mean(d))
+        print 'fake_image\tmean:{:2.4f}\tstd:{:2.4f}\n{}'.format(np.mean(d), np.std(d), d)
 
         x = tf.reshape(x, [NUM_GEN, 28, 28, 1])
-        image_summary = tf.summary.image('generated_image', x)
+        image_summary = tf.summary.image('generated_image', x, NUM_GEN)
         summary = sess.run(image_summary)
         writer.add_summary(summary)
 

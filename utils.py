@@ -38,6 +38,38 @@ def fc_with_variables(name, input, num_out, act=tf.nn.relu, w_init=tf.random_nor
     return act(h2), w, b, h1, h2
 
 
+def conv2d_bn(name, input, filter, strides, padding, act=tf.nn.relu, is_training=False, w_init=tf.random_normal_initializer):
+    with tf.variable_scope(name) as scope:
+        w = get_scope_variable('weights', filter, w_init)
+        h1 = tf.nn.conv2d(input, w, strides, padding)
+        h2 = tf.contrib.layers.batch_norm(h1, center=True, scale=True, is_training=is_training, scope='bn',
+                                          reuse=scope.reuse)
+    return act(h2)
+
+
+def conv2d(name, input, filter, strides, padding, act=tf.nn.relu, w_init=tf.random_normal_initializer):
+    with tf.variable_scope(name) as scope:
+        w = get_scope_variable('weights', filter, w_init)
+        h1 = tf.nn.conv2d(input, w, strides, padding)
+    return act(h1)
+
+
+def conv2d_transpose_bn(name, input, filter, strides, output_shape, padding, act=tf.nn.relu, is_training=False, w_init=tf.random_normal_initializer):
+    with tf.variable_scope(name) as scope:
+        w = get_scope_variable('weights', filter, w_init)
+        h1 = tf.nn.conv2d_transpose(input, w, output_shape, strides, padding)
+        h2 = tf.contrib.layers.batch_norm(h1, center=True, scale=True, is_training=is_training, scope='bn',
+                                          reuse=scope.reuse)
+    return act(h2)
+
+
+def conv2d_transpose(name, input, filter, strides, output_shape, padding, act=tf.nn.relu, w_init=tf.random_normal_initializer):
+    with tf.variable_scope(name) as scope:
+        w = get_scope_variable('weights', filter, w_init)
+        h1 = tf.nn.conv2d_transpose(input, w, output_shape, strides, padding)
+    return act(h1)
+
+
 def xavier_init(shape):
     in_dim = shape[0]
     xavier_stddev = 1. / tf.sqrt(in_dim / 2.)

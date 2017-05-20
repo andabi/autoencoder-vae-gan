@@ -1,3 +1,17 @@
 sugartensor보기(tflearn), variable별 gradient 보기
+deconv
 --
 CIFAR-10 사용하기
+batch_normal과 sigmoid를 같이 사용할때의 문제점
+
+왜 학습이 잘 안되고 오래걸리나? VAE에 비해
+disc, gen 스케줄링 문제
+
+ssh 끊겨도 원격에서는 안 중단되게
+vpn 접속 시간 늘리는 방법
+
+학습을 좀 더 빠르게 하기 위한 방안
+- 모델을 더 작게 만들기
+- 배치 사이즈 줄이기
+
+랜덤 서치를 더 효율적으로 할 방법

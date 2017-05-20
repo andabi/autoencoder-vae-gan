@@ -1,4 +1,3 @@
-import tensorflow as tf
 from utils import *
 import os
 import numpy as np
@@ -14,40 +13,40 @@ class Generator(object):
         self.z = tf.placeholder(tf.float32, (batch_size, code_size), name='z')
         self()
 
-    # def __call__(self):
-    #     H_SIZE = 128
-    #     H2_SIZE = 256
-    #     H3_SIZE = 512
-    #     with tf.variable_scope('gen'):
-    #         out_1 = fc_bn('out_1', self.z, H_SIZE, act=leaky_relu, is_training=self.is_training)
-    #         out_2 = fc_bn('out_2', out_1, H2_SIZE, act=leaky_relu, is_training=self.is_training)
-    #         out_3 = fc_bn('out_3', out_2, H3_SIZE, act=leaky_relu, is_training=self.is_training)
-    #         # out_4 = fc_bn('out_4', out_3, H3_SIZE, is_training=self.is_training)
-    #         # out_5 = fc_bn('out_5', out_4, H3_SIZE, is_training=self.is_training)
-    #         x = fc('x', out_3, X_SIZE, act=tf.nn.sigmoid)
-    #     return x
-
-
     def __call__(self):
-        H_SIZE = 32
-        H2_SIZE = 128
-        H3_SIZE = 169
-        batch_size = shape(self.z)[0]
+        H_SIZE = 128
+        H2_SIZE = 256
+        H3_SIZE = 512
         with tf.variable_scope('gen'):
             out_1 = fc_bn('out_1', self.z, H_SIZE, act=leaky_relu, is_training=self.is_training)
             out_2 = fc_bn('out_2', out_1, H2_SIZE, act=leaky_relu, is_training=self.is_training)
             out_3 = fc_bn('out_3', out_2, H3_SIZE, act=leaky_relu, is_training=self.is_training)
-            out_3 = tf.reshape(out_3, [batch_size, 13, 13, 1])
-            out_4 = conv2d_transpose_bn('out_4', out_3, filter=[6, 6, 10, 1], output_shape=[batch_size, 18, 18, 10],
-                                        strides=[1, 1, 1, 1], padding='VALID',
-                                        act=leaky_relu, is_training=self.is_training)
-            out_5 = conv2d_transpose_bn('out_5', out_4, filter=[6, 6, 10, 10], output_shape=[batch_size, 23, 23, 10],
-                                        strides=[1, 1, 1, 1], padding='VALID',
-                                        act=leaky_relu, is_training=self.is_training)
-            x = conv2d_transpose('x', out_5, filter=[6, 6, 1, 10], output_shape=[batch_size, 28, 28, 1],
-                                 strides=[1, 1, 1, 1], padding='VALID',
-                                 act=tf.nn.sigmoid)
+            # out_4 = fc_bn('out_4', out_3, H3_SIZE, is_training=self.is_training)
+            # out_5 = fc_bn('out_5', out_4, H3_SIZE, is_training=self.is_training)
+            x = fc('x', out_3, X_SIZE, act=tf.nn.sigmoid)
         return x
+
+
+    # def __call__(self):
+    #     H_SIZE = 32
+    #     H2_SIZE = 128
+    #     H3_SIZE = 169
+    #     batch_size = shape(self.z)[0]
+    #     with tf.variable_scope('gen'):
+    #         out_1 = fc_bn('out_1', self.z, H_SIZE, act=leaky_relu, is_training=self.is_training)
+    #         out_2 = fc_bn('out_2', out_1, H2_SIZE, act=leaky_relu, is_training=self.is_training)
+    #         out_3 = fc_bn('out_3', out_2, H3_SIZE, act=leaky_relu, is_training=self.is_training)
+    #         out_3 = tf.reshape(out_3, [batch_size, 13, 13, 1])
+    #         out_4 = conv2d_transpose_bn('out_4', out_3, filter=[6, 6, 10, 1], output_shape=[batch_size, 18, 18, 10],
+    #                                     strides=[1, 1, 1, 1], padding='VALID',
+    #                                     act=leaky_relu, is_training=self.is_training)
+    #         out_5 = conv2d_transpose_bn('out_5', out_4, filter=[6, 6, 10, 10], output_shape=[batch_size, 23, 23, 10],
+    #                                     strides=[1, 1, 1, 1], padding='VALID',
+    #                                     act=leaky_relu, is_training=self.is_training)
+    #         x = conv2d_transpose('x', out_5, filter=[6, 6, 1, 10], output_shape=[batch_size, 28, 28, 1],
+    #                              strides=[1, 1, 1, 1], padding='VALID',
+    #                              act=tf.nn.sigmoid)
+    #     return x
 
 
 class Discriminator(object):
@@ -65,7 +64,8 @@ class Discriminator(object):
         batch_size = shape(x)[0]
         with tf.variable_scope('disc'):
             x = tf.reshape(x, [batch_size, 28, 28, 1])
-            out_1 = conv2d_bn('out_1', x, filter=[6, 6, 1, 10], strides=[1, 1, 1, 1], padding='VALID', act=leaky_relu,
+            out_1 = conv2d_bn('out_1', x, filter=[6, 6, 1, 10], strides=[1, 1, 1, 1], padding='VALID',
+                              act=leaky_relu,
                               is_training=self.is_training)
             out_2 = conv2d_bn('out_2', out_1, filter=[6, 6, 10, 10], strides=[1, 1, 1, 1], padding='VALID',
                               act=leaky_relu, is_training=self.is_training)
@@ -85,20 +85,11 @@ class GD(object):
         self.gen = gen
         self.disc = disc
 
-    # def _loss_disc(self, batch_size):
-    #     loss_real = tf.nn.sigmoid_cross_entropy_with_logits(labels=tf.ones((batch_size, 1)), logits=self.disc())
-    #     loss_fake = tf.nn.sigmoid_cross_entropy_with_logits(labels=tf.zeros((batch_size, 1)),
-    #                                                         logits=self.disc(self.gen()))
-    #     loss = 0.5 * tf.reduce_mean(loss_real + loss_fake)
-    #     return loss
-
-    def _loss_gen(self, batch_size):
-        # loss = tf.nn.sigmoid_cross_entropy_with_logits(labels=tf.ones((batch_size, 1)),
-        #                                                logits=self.disc(self.gen()))
+    def _loss_gen(self):
         loss = -tf.log(self.disc(self.gen()))
         return tf.reduce_mean(loss)
 
-    def _loss_disc(self, batch_size):
+    def _loss_disc(self):
         loss_real = -tf.log(self.disc())
         loss_fake = -tf.log(1. - self.disc(self.gen()))
         loss = 0.5 * (loss_real + loss_fake)
@@ -112,10 +103,10 @@ class GD(object):
     def sample_noise(self, batch_size):
         return np.random.normal(0, 1, (batch_size, self.gen.code_size))
 
-    def train(self, sess, data, final_step, lr_gen, lr_disc, batch_size, writer, k_disc=1, ckpt_step=1):
+    def train(self, sess, data, final_step, lr_gen, lr_disc, batch_size, writer, k_gen=1, k_disc=1, ckpt_step=1):
 
-        loss_gen_op = self._loss_gen(batch_size)
-        loss_disc_op = self._loss_disc(batch_size)
+        loss_gen_op = self._loss_gen()
+        loss_disc_op = self._loss_disc()
 
         global_step = tf.Variable(0, dtype=tf.int32, trainable=False, name='global_step')
 
@@ -123,13 +114,13 @@ class GD(object):
             optimizer_gen = tf.train.AdamOptimizer(learning_rate=lr_gen).minimize(loss_gen_op,
                                                                                   var_list=tf.get_collection(
                                                                                       tf.GraphKeys.TRAINABLE_VARIABLES,
-                                                                                      'gen'), global_step=global_step)
+                                                                                      'gen'))
 
         with tf.control_dependencies(tf.get_collection(tf.GraphKeys.UPDATE_OPS, scope='disc')):
             optimizer_disc = tf.train.AdamOptimizer(learning_rate=lr_disc).minimize(loss_disc_op,
                                                                                     var_list=tf.get_collection(
                                                                                         tf.GraphKeys.TRAINABLE_VARIABLES,
-                                                                                        'disc'))
+                                                                                        'disc'), global_step=global_step)
 
         # grad_loss = tf.gradients(self.loss, [self.w_mu, self.w_var])
         # grad_encoder = tf.gradients([self.mu, self.log_var], [self.h2_mu, self.h2_var])
@@ -155,10 +146,11 @@ class GD(object):
                 # _, loss, g_loss, g_encoder, summary = sess.run([optimizer_gen, self.loss, grad_loss, grad_encoder, summary_op],
                 #                                       feed_dict={self.input: input_batch, self.is_training: True, self.batch_size: batch_size})
 
-            _, curr_loss_gen, summary_loss_gen = sess.run([optimizer_gen, loss_gen_op, summary_loss_gen_op],
-                                                          feed_dict={self.gen.z: self.sample_noise(batch_size),
-                                                                     self.gen.is_training: True,
-                                                                     self.disc.is_training: True})
+            for k in range(k_gen):
+                _, curr_loss_gen, summary_loss_gen = sess.run([optimizer_gen, loss_gen_op, summary_loss_gen_op],
+                                                              feed_dict={self.gen.z: self.sample_noise(batch_size),
+                                                                         self.gen.is_training: True,
+                                                                         self.disc.is_training: True})
 
             if (step + 1) % ckpt_step == 0:
                 loss_gen.update(curr_loss_gen)

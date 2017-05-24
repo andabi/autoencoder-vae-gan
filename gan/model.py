@@ -58,7 +58,6 @@ class Discriminator(object):
     def __call__(self, x=None):
         H_SIZE = 128
         H2_SIZE = 32
-        H3_SIZE = 16
         if x is None:
             x = self.x
         batch_size = shape(x)[0]
@@ -73,7 +72,6 @@ class Discriminator(object):
             out_3 = tf.reshape(out_3, [batch_size, 169])
             out_4 = fc('out_4', out_3, H_SIZE, act=leaky_relu, is_training=self.is_training)
             out_5 = fc('out_5', out_4, H2_SIZE, act=leaky_relu, is_training=self.is_training)
-            # out_5 = fc_bn('out_5', out_4, H3_SIZE, act=leaky_relu, is_training=self.is_training)
             d = fc('out', out_5, 1, act=tf.nn.sigmoid, bn=False)
         return d
 
@@ -98,6 +96,20 @@ class GD(object):
         ckpt = tf.train.get_checkpoint_state(os.path.dirname(self.ckpt_path + '/checkpoint'))
         if ckpt and ckpt.model_checkpoint_path:
             tf.train.Saver().restore(sess, ckpt.model_checkpoint_path)
+
+    def _summaries_gen(self):
+        tf.get_variable_scope().reuse_variables()
+        for v in tf.get_collection(tf.GraphKeys.TRAINABLE_VARIABLES, scope='gen'):
+            tf.summary.histogram(v.name, tf.gradients(self._loss_gen(), v), collections=['gen'])
+        tf.summary.scalar('loss', self._loss_gen(), collections=['gen'])
+        return tf.summary.merge_all(key='gen')
+
+    def _summaries_disc(self):
+        tf.get_variable_scope().reuse_variables()
+        for v in tf.get_collection(tf.GraphKeys.TRAINABLE_VARIABLES, scope='disc'):
+            tf.summary.histogram(v.name, tf.gradients(self._loss_disc(), v), collections=['disc'])
+        tf.summary.scalar('loss', self._loss_disc(), collections=['disc'])
+        return tf.summary.merge_all(key='disc')
 
     def sample_noise(self, batch_size):
         return np.random.normal(0, 1, (batch_size, self.gen.code_size))
@@ -124,11 +136,9 @@ class GD(object):
         sess.run(tf.global_variables_initializer())
         self._load(sess)
 
-        tf.summary.scalar('summary_loss_gen', loss_gen_op, collections=['gen'])
-        tf.summary.scalar('summary_loss_disc', loss_disc_op, collections=['disc'])
-
-        s_gen_all_op = tf.summary.merge_all(key='gen')
-        s_disc_all_op = tf.summary.merge_all(key='disc')
+        s_gen_all_op = self._summaries_gen()
+        s_disc_all_op = self._summaries_disc()
+        s_gen_img_op = tf.summary.image('generated_image', tf.reshape(self.gen(), [batch_size, 28, 28, 1]), 1)
 
         loss_gen, loss_disc = Diff(), Diff()
         for step in range(global_step.eval(), final_step):
@@ -159,13 +169,7 @@ class GD(object):
                 writer.add_summary(s_gen_all, global_step=step)
                 writer.add_summary(s_disc_all, global_step=step)
 
-
-                x = sess.run(self.gen(),
-                             feed_dict={self.gen.z: self.sample_noise(batch_size), self.gen.is_training: False})
-                x = tf.reshape(x, [batch_size, 28, 28, 1])
-                s_gen_img_op = tf.summary.image('generated_image', x, 1)
-                s_gen_img = sess.run(s_gen_img_op)
-                # print 'grad_loss={}, grad_encoder={}'.format(g_loss, g_encoder)
+                s_gen_img = sess.run(s_gen_img_op, feed_dict={self.gen.z: self.sample_noise(batch_size), self.gen.is_training: False})
                 writer.add_summary(s_gen_img, global_step=step)
 
     def generate(self, sess, batch_size):

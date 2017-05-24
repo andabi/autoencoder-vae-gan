@@ -16,6 +16,7 @@ RE_TRAIN = True
 def main():
     if RE_TRAIN and os.path.exists(CKPT_PATH):
         shutil.rmtree(CKPT_PATH)
+        shutil.rmtree('graphs/')
     if not os.path.exists(CKPT_PATH):
         os.mkdir(CKPT_PATH)
 

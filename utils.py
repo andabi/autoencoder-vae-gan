@@ -10,64 +10,46 @@ def get_scope_variable(var, shape, initializer):
     return v
 
 
-def fc(name, input, num_out, act=tf.nn.relu, w_init=tf.contrib.layers.xavier_initializer(),
-             b_init=tf.zeros_initializer):
-    _, num_input = shape(input)
-    with tf.variable_scope(name):
-        w = get_scope_variable('weights', (num_input, num_out), w_init)
-        b = get_scope_variable('biases', (1, num_out), b_init)
-        h = tf.matmul(input, w) + b
-    return act(h)
-
-
-def fc_bn(name, input, num_out, act=tf.nn.relu, w_init=tf.random_normal_initializer,
-          b_init=tf.zeros_initializer, is_training=False):
-    layer, w, b, h1, h2 = fc_with_variables(name, input, num_out, act, w_init, b_init, is_training)
-    return layer
-
-
-def fc_with_variables(name, input, num_out, act=tf.nn.relu, w_init=tf.random_normal_initializer,
-                      b_init=tf.zeros_initializer, is_training=False):
+def fc(name, input, num_out, act=tf.nn.relu, w_init=tf.random_normal_initializer,
+       b_init=tf.zeros_initializer, is_training=False, bn=True):
     _, num_input = shape(input)
     with tf.variable_scope(name) as scope:
-        w = get_scope_variable('weights', (num_input, num_out), w_init)
-        b = get_scope_variable('biases', (1, num_out), b_init)
+        w = get_scope_variable('w', (num_input, num_out), w_init)
+        b = get_scope_variable('b', (1, num_out), b_init)
         h1 = tf.matmul(input, w) + b
-        h2 = tf.contrib.layers.batch_norm(h1, center=True, scale=True, is_training=is_training, scope='bn',
-                                          reuse=scope.reuse)
-    return act(h2), w, b, h1, h2
+        if bn:
+            h2 = tf.contrib.layers.batch_norm(h1, center=True, scale=True, is_training=is_training, scope='bn',
+                                              reuse=scope.reuse)
+            out = act(h2, name='out')
+        else:
+            out = act(h1, name='out')
+    return out
 
 
-def conv2d_bn(name, input, filter, strides, padding, act=tf.nn.relu, is_training=False, w_init=tf.random_normal_initializer):
+def conv2d(name, input, filter, strides, padding, act=tf.nn.relu, is_training=False, w_init=tf.random_normal_initializer, bn=True):
     with tf.variable_scope(name) as scope:
-        w = get_scope_variable('weights', filter, w_init)
+        w = get_scope_variable('w', filter, w_init)
         h1 = tf.nn.conv2d(input, w, strides, padding)
-        h2 = tf.contrib.layers.batch_norm(h1, center=True, scale=True, is_training=is_training, scope='bn',
+        if bn:
+            h2 = tf.contrib.layers.batch_norm(h1, center=True, scale=True, is_training=is_training, scope='bn',
                                           reuse=scope.reuse)
-    return act(h2)
+            out = act(h2, name='out')
+        else:
+            out = act(h1, name='out')
+    return out
 
 
-def conv2d(name, input, filter, strides, padding, act=tf.nn.relu, w_init=tf.random_normal_initializer):
-    with tf.variable_scope(name) as scope:
-        w = get_scope_variable('weights', filter, w_init)
-        h1 = tf.nn.conv2d(input, w, strides, padding)
-    return act(h1)
-
-
-def conv2d_transpose_bn(name, input, filter, strides, output_shape, padding, act=tf.nn.relu, is_training=False, w_init=tf.random_normal_initializer):
+def conv2d_transpose(name, input, filter, strides, output_shape, padding, act=tf.nn.relu, is_training=False, w_init=tf.random_normal_initializer, bn=True):
     with tf.variable_scope(name) as scope:
         w = get_scope_variable('weights', filter, w_init)
         h1 = tf.nn.conv2d_transpose(input, w, output_shape, strides, padding)
-        h2 = tf.contrib.layers.batch_norm(h1, center=True, scale=True, is_training=is_training, scope='bn',
+        if bn:
+            h2 = tf.contrib.layers.batch_norm(h1, center=True, scale=True, is_training=is_training, scope='bn',
                                           reuse=scope.reuse)
-    return act(h2)
-
-
-def conv2d_transpose(name, input, filter, strides, output_shape, padding, act=tf.nn.relu, w_init=tf.random_normal_initializer):
-    with tf.variable_scope(name) as scope:
-        w = get_scope_variable('weights', filter, w_init)
-        h1 = tf.nn.conv2d_transpose(input, w, output_shape, strides, padding)
-    return act(h1)
+            out = act(h2)
+        else:
+            out = act(h1)
+    return out
 
 
 def xavier_init(shape):
@@ -76,8 +58,8 @@ def xavier_init(shape):
     return tf.random_normal(shape=shape, stddev=xavier_stddev)
 
 
-def leaky_relu(x):
-    return tf.maximum(x, 0.01 * x)
+def leaky_relu(x, name=None):
+    return tf.maximum(x, 0.01 * x, name=name)
 
 
 def shape(tensor):

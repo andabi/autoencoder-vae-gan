@@ -1,6 +1,6 @@
 import os
 
-from utils import fc_bn, fc_with_variables
+from utils import fc
 import tensorflow as tf
 
 
@@ -77,27 +77,20 @@ class AutoEncoder(object):
 
 X_SIZE = 784
 Z_SIZE = 128
-H_1_SIZE = 512
-H_2_SIZE = 256
+H_SIZE = 512
 
 
 def _encoder(input, code_size):
-    out_1_encoder, w_1_encoder = fc_with_variables(input, H_1_SIZE)
-    # out_2_encoder = fc(out_1_encoder, H_1_SIZE)
-    # out_3_encoder = fc(out_2_encoder, H_2_SIZE)
-    # out_4_encoder = fc(out_3_encoder, H_2_SIZE)
-    out_5_encoder, w_5_encoder = fc_with_variables(out_1_encoder, code_size)
-    out_encoder = fc_bn(out_5_encoder, code_size)
+    out_1_encoder = fc('out_1_encoder', input, H_SIZE)
+    out_2_encoder = fc('out_2_encoder', out_1_encoder, code_size)
+    out_encoder = fc('out_encoder', out_2_encoder, code_size)
     return out_encoder
 
 
 def _decoder(code, code_size, out_size):
-    out_1_decoder, w_1_decoder = fc_with_variables(code, code_size)
-    # out_2_decoder = fc(out_1_decoder, H_2_SIZE)
-    # out_3_decoder = fc(out_2_decoder, H_2_SIZE)
-    # out_4_decoder = fc(out_3_decoder, H_1_SIZE)
-    out_5_decoder, w_5_decoder = fc_with_variables(out_1_decoder, H_1_SIZE)
-    out_decoder = fc_bn(out_5_decoder, out_size, tf.nn.sigmoid)
+    out_1_decoder = fc('out_1_decoder', code, code_size)
+    out_2_decoder = fc('out_2_decoder', out_1_decoder, H_SIZE)
+    out_decoder = fc('out_decoder', out_2_decoder, out_size, tf.nn.sigmoid)
     return out_decoder
 
 

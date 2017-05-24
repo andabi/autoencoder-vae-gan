@@ -18,12 +18,12 @@ class Generator(object):
         H2_SIZE = 256
         H3_SIZE = 512
         with tf.variable_scope('gen'):
-            out_1 = fc_bn('out_1', self.z, H_SIZE, act=leaky_relu, is_training=self.is_training)
-            out_2 = fc_bn('out_2', out_1, H2_SIZE, act=leaky_relu, is_training=self.is_training)
-            out_3 = fc_bn('out_3', out_2, H3_SIZE, act=leaky_relu, is_training=self.is_training)
+            out_1 = fc('out_1', self.z, H_SIZE, act=leaky_relu, is_training=self.is_training)
+            out_2 = fc('out_2', out_1, H2_SIZE, act=leaky_relu, is_training=self.is_training)
+            out_3 = fc('out_3', out_2, H3_SIZE, act=leaky_relu, is_training=self.is_training)
             # out_4 = fc_bn('out_4', out_3, H3_SIZE, is_training=self.is_training)
             # out_5 = fc_bn('out_5', out_4, H3_SIZE, is_training=self.is_training)
-            x = fc('x', out_3, X_SIZE, act=tf.nn.sigmoid)
+            x = fc('x', out_3, X_SIZE, act=tf.nn.sigmoid, bn=False)
         return x
 
 
@@ -64,18 +64,17 @@ class Discriminator(object):
         batch_size = shape(x)[0]
         with tf.variable_scope('disc'):
             x = tf.reshape(x, [batch_size, 28, 28, 1])
-            out_1 = conv2d_bn('out_1', x, filter=[6, 6, 1, 10], strides=[1, 1, 1, 1], padding='VALID',
-                              act=leaky_relu,
-                              is_training=self.is_training)
-            out_2 = conv2d_bn('out_2', out_1, filter=[6, 6, 10, 10], strides=[1, 1, 1, 1], padding='VALID',
-                              act=leaky_relu, is_training=self.is_training)
-            out_3 = conv2d_bn('out_3', out_2, filter=[6, 6, 10, 1], strides=[1, 1, 1, 1], padding='VALID',
-                              act=leaky_relu, is_training=self.is_training)
+            out_1 = conv2d('out_1', x, filter=[6, 6, 1, 10], strides=[1, 1, 1, 1], padding='VALID',
+                           act=leaky_relu, bn=False)
+            out_2 = conv2d('out_2', out_1, filter=[6, 6, 10, 10], strides=[1, 1, 1, 1], padding='VALID',
+                           act=leaky_relu, is_training=self.is_training)
+            out_3 = conv2d('out_3', out_2, filter=[6, 6, 10, 1], strides=[1, 1, 1, 1], padding='VALID',
+                           act=leaky_relu, is_training=self.is_training)
             out_3 = tf.reshape(out_3, [batch_size, 169])
-            out_4 = fc_bn('out_4', out_3, H_SIZE, act=leaky_relu, is_training=self.is_training)
-            out_5 = fc_bn('out_5', out_4, H2_SIZE, act=leaky_relu, is_training=self.is_training)
+            out_4 = fc('out_4', out_3, H_SIZE, act=leaky_relu, is_training=self.is_training)
+            out_5 = fc('out_5', out_4, H2_SIZE, act=leaky_relu, is_training=self.is_training)
             # out_5 = fc_bn('out_5', out_4, H3_SIZE, act=leaky_relu, is_training=self.is_training)
-            d = fc('out', out_5, 1, act=tf.nn.sigmoid)
+            d = fc('out', out_5, 1, act=tf.nn.sigmoid, bn=False)
         return d
 
 
@@ -111,7 +110,7 @@ class GD(object):
         global_step = tf.Variable(0, dtype=tf.int32, trainable=False, name='global_step')
 
         with tf.control_dependencies(tf.get_collection(tf.GraphKeys.UPDATE_OPS, scope='gen')):
-            optimizer_gen = tf.train.AdamOptimizer(learning_rate=lr_gen).minimize(loss_gen_op,
+            optimizer_gen = tf.train.GradientDescentOptimizer(learning_rate=lr_gen).minimize(loss_gen_op,
                                                                                   var_list=tf.get_collection(
                                                                                       tf.GraphKeys.TRAINABLE_VARIABLES,
                                                                                       'gen'))
@@ -122,32 +121,27 @@ class GD(object):
                                                                                         tf.GraphKeys.TRAINABLE_VARIABLES,
                                                                                         'disc'), global_step=global_step)
 
-        # grad_loss = tf.gradients(self.loss, [self.w_mu, self.w_var])
-        # grad_encoder = tf.gradients([self.mu, self.log_var], [self.h2_mu, self.h2_var])
-
         sess.run(tf.global_variables_initializer())
         self._load(sess)
 
-        summary_loss_gen_op = tf.summary.scalar('summary_loss_gen', loss_gen_op)
-        summary_loss_disc_op = tf.summary.scalar('summary_loss_disc', loss_disc_op)
+        tf.summary.scalar('summary_loss_gen', loss_gen_op, collections=['gen'])
+        tf.summary.scalar('summary_loss_disc', loss_disc_op, collections=['disc'])
 
-        # = tf.summary.scalar('summary_loss_disc', loss_disc_op)
-        # summary_op = tf.summary.merge_all()
+        s_gen_all_op = tf.summary.merge_all(key='gen')
+        s_disc_all_op = tf.summary.merge_all(key='disc')
 
         loss_gen, loss_disc = Diff(), Diff()
         for step in range(global_step.eval(), final_step):
             for k in range(k_disc):
                 input, _ = data.next_batch(batch_size)
-                _, curr_loss_disc, summary_loss_disc = sess.run([optimizer_disc, loss_disc_op, summary_loss_disc_op],
-                                                                feed_dict={self.disc.x: input,
+                _, curr_loss_disc, s_disc_all = sess.run([optimizer_disc, loss_disc_op, s_disc_all_op],
+                                                          feed_dict={self.disc.x: input,
                                                                            self.gen.z: self.sample_noise(batch_size),
                                                                            self.disc.is_training: True,
                                                                            self.gen.is_training: True})
-                # _, loss, g_loss, g_encoder, summary = sess.run([optimizer_gen, self.loss, grad_loss, grad_encoder, summary_op],
-                #                                       feed_dict={self.input: input_batch, self.is_training: True, self.batch_size: batch_size})
 
             for k in range(k_gen):
-                _, curr_loss_gen, summary_loss_gen = sess.run([optimizer_gen, loss_gen_op, summary_loss_gen_op],
+                _, curr_loss_gen, s_gen_all = sess.run([optimizer_gen, loss_gen_op, s_gen_all_op],
                                                               feed_dict={self.gen.z: self.sample_noise(batch_size),
                                                                          self.gen.is_training: True,
                                                                          self.disc.is_training: True})
@@ -162,16 +156,17 @@ class GD(object):
                                                                                                              loss_disc.diff * 100,
                                                                                                              loss_gen.value,
                                                                                                              loss_disc.value)
+                writer.add_summary(s_gen_all, global_step=step)
+                writer.add_summary(s_disc_all, global_step=step)
+
 
                 x = sess.run(self.gen(),
                              feed_dict={self.gen.z: self.sample_noise(batch_size), self.gen.is_training: False})
                 x = tf.reshape(x, [batch_size, 28, 28, 1])
-                image_summary = tf.summary.image('generated_image', x, 1)
-                summary = sess.run(image_summary)
-                writer.add_summary(summary, global_step=step)
-
+                s_gen_img_op = tf.summary.image('generated_image', x, 1)
+                s_gen_img = sess.run(s_gen_img_op)
                 # print 'grad_loss={}, grad_encoder={}'.format(g_loss, g_encoder)
-                # writer.add_summary([summary_loss_gen, summary_loss_disc], global_step=step)
+                writer.add_summary(s_gen_img, global_step=step)
 
     def generate(self, sess, batch_size):
         sess.run(tf.global_variables_initializer())

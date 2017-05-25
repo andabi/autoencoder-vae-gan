@@ -13,40 +13,33 @@ class Generator(object):
         self.z = tf.placeholder(tf.float32, (batch_size, code_size), name='z')
         self()
 
-    def __call__(self):
-        H_SIZE = 128
-        H2_SIZE = 256
-        H3_SIZE = 512
-        with tf.variable_scope('gen'):
-            out_1 = fc('out_1', self.z, H_SIZE, act=leaky_relu, is_training=self.is_training)
-            out_2 = fc('out_2', out_1, H2_SIZE, act=leaky_relu, is_training=self.is_training)
-            out_3 = fc('out_3', out_2, H3_SIZE, act=leaky_relu, is_training=self.is_training)
-            # out_4 = fc_bn('out_4', out_3, H3_SIZE, is_training=self.is_training)
-            # out_5 = fc_bn('out_5', out_4, H3_SIZE, is_training=self.is_training)
-            x = fc('x', out_3, X_SIZE, act=tf.nn.sigmoid, bn=False)
-        return x
-
-
     # def __call__(self):
-    #     H_SIZE = 32
-    #     H2_SIZE = 128
-    #     H3_SIZE = 169
-    #     batch_size = shape(self.z)[0]
+    #     H_SIZE = 128
+    #     H2_SIZE = 256
+    #     H3_SIZE = 512
     #     with tf.variable_scope('gen'):
-    #         out_1 = fc_bn('out_1', self.z, H_SIZE, act=leaky_relu, is_training=self.is_training)
-    #         out_2 = fc_bn('out_2', out_1, H2_SIZE, act=leaky_relu, is_training=self.is_training)
-    #         out_3 = fc_bn('out_3', out_2, H3_SIZE, act=leaky_relu, is_training=self.is_training)
-    #         out_3 = tf.reshape(out_3, [batch_size, 13, 13, 1])
-    #         out_4 = conv2d_transpose_bn('out_4', out_3, filter=[6, 6, 10, 1], output_shape=[batch_size, 18, 18, 10],
-    #                                     strides=[1, 1, 1, 1], padding='VALID',
-    #                                     act=leaky_relu, is_training=self.is_training)
-    #         out_5 = conv2d_transpose_bn('out_5', out_4, filter=[6, 6, 10, 10], output_shape=[batch_size, 23, 23, 10],
-    #                                     strides=[1, 1, 1, 1], padding='VALID',
-    #                                     act=leaky_relu, is_training=self.is_training)
-    #         x = conv2d_transpose('x', out_5, filter=[6, 6, 1, 10], output_shape=[batch_size, 28, 28, 1],
-    #                              strides=[1, 1, 1, 1], padding='VALID',
-    #                              act=tf.nn.sigmoid)
+    #         out_1 = fc('out_1', self.z, H_SIZE, act=leaky_relu, is_training=self.is_training)
+    #         out_2 = fc('out_2', out_1, H2_SIZE, act=leaky_relu, is_training=self.is_training)
+    #         out_3 = fc('out_3', out_2, H3_SIZE, act=leaky_relu, is_training=self.is_training)
+    #         # out_4 = fc('out_4', out_3, H3_SIZE, is_training=self.is_training)
+    #         # out_5 = fc('out_5', out_4, H3_SIZE, is_training=self.is_training)
+    #         x = fc('x', out_3, X_SIZE, act=tf.nn.sigmoid, bn=False)
     #     return x
+
+
+    def __call__(self):
+        batch_size = shape(self.z)[0]
+        with tf.variable_scope('gen'):
+            out_1 = fc('out_1', self.z, 1024, act=leaky_relu, is_training=self.is_training)
+            out_2 = fc('out_2', out_1, 7 * 7 * 64, act=leaky_relu, is_training=self.is_training)
+            out_2 = tf.reshape(out_2, [-1, 7, 7, 64])
+            out_3 = conv2d_transpose('out_3', out_2, filter=[7, 7, 32, 64], output_shape=[batch_size, 14, 14, 32],
+                                        strides=[1, 2, 2, 1], padding='SAME',
+                                        act=leaky_relu, is_training=self.is_training)
+            x = conv2d_transpose('out', out_3, filter=[6, 6, 1, 32], output_shape=[batch_size, 28, 28, 1],
+                                        strides=[1, 2, 2, 1], padding='SAME',
+                                        act=tf.nn.sigmoid, bn=False)
+        return x
 
 
 class Discriminator(object):
@@ -56,23 +49,18 @@ class Discriminator(object):
         self()
 
     def __call__(self, x=None):
-        H_SIZE = 128
-        H2_SIZE = 32
         if x is None:
             x = self.x
-        batch_size = shape(x)[0]
         with tf.variable_scope('disc'):
-            x = tf.reshape(x, [batch_size, 28, 28, 1])
-            out_1 = conv2d('out_1', x, filter=[6, 6, 1, 10], strides=[1, 1, 1, 1], padding='VALID',
-                           act=leaky_relu, bn=False)
-            out_2 = conv2d('out_2', out_1, filter=[6, 6, 10, 10], strides=[1, 1, 1, 1], padding='VALID',
+            x = tf.reshape(x, [-1, 28, 28, 1])
+            out_1 = conv2d('out_1', x, filter=[7, 7, 1, 32], strides=[1, 2, 2, 1], padding='SAME',
                            act=leaky_relu, is_training=self.is_training)
-            out_3 = conv2d('out_3', out_2, filter=[6, 6, 10, 1], strides=[1, 1, 1, 1], padding='VALID',
+            out_2 = conv2d('out_2', out_1, filter=[7, 7, 32, 64], strides=[1, 2, 2, 1], padding='SAME',
                            act=leaky_relu, is_training=self.is_training)
-            out_3 = tf.reshape(out_3, [batch_size, 169])
-            out_4 = fc('out_4', out_3, H_SIZE, act=leaky_relu, is_training=self.is_training)
-            out_5 = fc('out_5', out_4, H2_SIZE, act=leaky_relu, is_training=self.is_training)
-            d = fc('out', out_5, 1, act=tf.nn.sigmoid, bn=False)
+            out_2 = tf.reshape(out_2, [-1, 7 * 7 * 64])
+            out_3 = fc('out_3', out_2, 1024, act=leaky_relu, is_training=self.is_training)
+            out_4 = fc('out_4', out_3, 10, act=leaky_relu, is_training=self.is_training)
+            d = fc('out', out_4, 1, act=tf.nn.sigmoid, bn=False)
         return d
 
 
@@ -101,14 +89,14 @@ class GD(object):
         tf.get_variable_scope().reuse_variables()
         for v in tf.get_collection(tf.GraphKeys.TRAINABLE_VARIABLES, scope='gen'):
             tf.summary.histogram(v.name, tf.gradients(self._loss_gen(), v), collections=['gen'])
-        tf.summary.scalar('loss', self._loss_gen(), collections=['gen'])
+        tf.summary.scalar('gen/loss', self._loss_gen(), collections=['gen'])
         return tf.summary.merge_all(key='gen')
 
     def _summaries_disc(self):
         tf.get_variable_scope().reuse_variables()
         for v in tf.get_collection(tf.GraphKeys.TRAINABLE_VARIABLES, scope='disc'):
             tf.summary.histogram(v.name, tf.gradients(self._loss_disc(), v), collections=['disc'])
-        tf.summary.scalar('loss', self._loss_disc(), collections=['disc'])
+        tf.summary.scalar('disc/loss', self._loss_disc(), collections=['disc'])
         return tf.summary.merge_all(key='disc')
 
     def sample_noise(self, batch_size):
@@ -122,13 +110,13 @@ class GD(object):
         global_step = tf.Variable(0, dtype=tf.int32, trainable=False, name='global_step')
 
         with tf.control_dependencies(tf.get_collection(tf.GraphKeys.UPDATE_OPS, scope='gen')):
-            optimizer_gen = tf.train.GradientDescentOptimizer(learning_rate=lr_gen).minimize(loss_gen_op,
+            optimizer_gen = tf.train.AdamOptimizer(learning_rate=lr_gen).minimize(loss_gen_op,
                                                                                   var_list=tf.get_collection(
                                                                                       tf.GraphKeys.TRAINABLE_VARIABLES,
                                                                                       'gen'))
 
         with tf.control_dependencies(tf.get_collection(tf.GraphKeys.UPDATE_OPS, scope='disc')):
-            optimizer_disc = tf.train.AdamOptimizer(learning_rate=lr_disc).minimize(loss_disc_op,
+            optimizer_disc = tf.train.GradientDescentOptimizer(learning_rate=lr_disc).minimize(loss_disc_op,
                                                                                     var_list=tf.get_collection(
                                                                                         tf.GraphKeys.TRAINABLE_VARIABLES,
                                                                                         'disc'), global_step=global_step)
@@ -156,7 +144,7 @@ class GD(object):
                                                                          self.gen.is_training: True,
                                                                          self.disc.is_training: True})
 
-            if (step + 1) % ckpt_step == 0:
+            if step % ckpt_step == 0:
                 loss_gen.update(curr_loss_gen)
                 loss_disc.update(curr_loss_disc)
 

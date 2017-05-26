@@ -3,16 +3,16 @@ from model import *
 import os
 import shutil
 
-CASE = 'gd'
+CASE = 'simple_gen_2'
 CKPT_PATH = 'checkpoints/' + CASE
 GRAPH_PATH = 'graphs/' + CASE
-CODE_SIZE = 100
+CODE_SIZE = 128
 LR_DISC = 2e-4
 LR_GEN = 2e-3
 BATCH_SIZE = 128
-FINAL_STEP = 500000
-CKPT_STEP = 200
-RE_TRAIN = True
+FINAL_STEP = 10000
+CKPT_STEP = 500
+RE_TRAIN = False
 
 
 def main():

@@ -16,13 +16,12 @@ class Generator(object):
     def __call__(self):
         batch_size = shape(self.z)[0]
         with tf.variable_scope('gen'):
-            out_1 = fc('out_1', self.z, 1024, act=leaky_relu, is_training=self.is_training)
-            out_2 = fc('out_2', out_1, 7 * 7 * 64, act=leaky_relu, is_training=self.is_training)
-            out_2 = tf.reshape(out_2, [-1, 7, 7, 64])
-            out_3 = conv2d_transpose('out_3', out_2, filter=[3, 3, 32, 64], output_shape=[batch_size, 14, 14, 32],
+            out_1 = fc('out_1', self.z, 392, act=leaky_relu, is_training=self.is_training)
+            out_1 = tf.reshape(out_1, [-1, 7, 7, 8])
+            out_2 = conv2d_transpose('out_2', out_1, filter=[3, 3, 4, 8], output_shape=[batch_size, 14, 14, 4],
                                         strides=[1, 2, 2, 1], padding='SAME',
                                         act=leaky_relu, is_training=self.is_training)
-            x = conv2d_transpose('out', out_3, filter=[3, 3, 1, 32], output_shape=[batch_size, 28, 28, 1],
+            x = conv2d_transpose('out', out_2, filter=[3, 3, 1, 4], output_shape=[batch_size, 28, 28, 1],
                                         strides=[1, 2, 2, 1], padding='SAME',
                                         act=tf.nn.sigmoid, bn=False)
         return x
@@ -145,16 +144,17 @@ class GD(object):
                                                                          self.gen.is_training: True,
                                                                          self.disc.is_training: True})
 
-            if step % ckpt_step == 0:
-                loss_gen.update(curr_loss_gen)
-                loss_disc.update(curr_loss_disc)
+            loss_gen.update(curr_loss_gen)
+            loss_disc.update(curr_loss_disc)
+            print 'step-{}\td_loss_gen={:2.2f}%\td_loss_disc={:2.2f}%\tloss_gen={}\tloss_disc={}'.format(step,
+                                                                                                         loss_gen.diff * 100,
+                                                                                                         loss_disc.diff * 100,
+                                                                                                         loss_gen.value,
+                                                                                                         loss_disc.value)
 
+            if step % ckpt_step == 0:
                 tf.train.Saver().save(sess, self.ckpt_path + '/gan', global_step=step)
-                print 'step-{}\td_loss_gen={:2.2f}%\td_loss_disc={:2.2f}%\tloss_gen={}\tloss_disc={}'.format(step,
-                                                                                                             loss_gen.diff * 100,
-                                                                                                             loss_disc.diff * 100,
-                                                                                                             loss_gen.value,
-                                                                                                             loss_disc.value)
+
                 writer.add_summary(s_gen_all, global_step=step)
                 writer.add_summary(s_disc_all, global_step=step)
 

@@ -6,12 +6,13 @@ import shutil
 CODE_SIZE = 100
 LR_DISC = 2e-4
 LR_GEN = 2e-4
-BATCH_SIZE = 256
+BATCH_SIZE = 128
 FINAL_STEP = 500000
-CKPT_STEP = 1000
+CKPT_STEP = 10
 CKPT_PATH = 'checkpoints/code_' + str(CODE_SIZE)
 RE_TRAIN = True
 GRAPH_PATH = 'graphs'
+
 
 def main():
     if RE_TRAIN:

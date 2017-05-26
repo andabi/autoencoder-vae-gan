@@ -54,13 +54,13 @@ class Discriminator(object):
         with tf.variable_scope('disc'):
             x = tf.reshape(x, [-1, 28, 28, 1])
             out_1 = conv2d('out_1', x, filter=[7, 7, 1, 32], strides=[1, 2, 2, 1], padding='SAME',
-                           act=leaky_relu, is_training=self.is_training)
+                           act=leaky_relu, bn=False)
             out_2 = conv2d('out_2', out_1, filter=[7, 7, 32, 64], strides=[1, 2, 2, 1], padding='SAME',
                            act=leaky_relu, is_training=self.is_training)
             out_2 = tf.reshape(out_2, [-1, 7 * 7 * 64])
             out_3 = fc('out_3', out_2, 1024, act=leaky_relu, is_training=self.is_training)
             out_4 = fc('out_4', out_3, 10, act=leaky_relu, is_training=self.is_training)
-            d = fc('out', out_4, 1, act=tf.nn.sigmoid, bn=False)
+            d = fc('out', out_4, 1, act=tf.nn.sigmoid, is_training=self.is_training)
         return d
 
 
@@ -75,8 +75,7 @@ class GD(object):
         return tf.reduce_mean(loss)
 
     def _loss_disc(self):
-        loss_real = -tf.log(self.disc())
-        loss_fake = -tf.log(1. - self.disc(self.gen()))
+        loss_real, loss_fake = -tf.log(self.disc()), -tf.log(1. - self.disc(self.gen()))
         loss = 0.5 * (loss_real + loss_fake)
         return tf.reduce_mean(loss)
 
@@ -88,15 +87,29 @@ class GD(object):
     def _summaries_gen(self):
         tf.get_variable_scope().reuse_variables()
         for v in tf.get_collection(tf.GraphKeys.TRAINABLE_VARIABLES, scope='gen'):
-            tf.summary.histogram(v.name, tf.gradients(self._loss_gen(), v), collections=['gen'])
+            tf.summary.histogram(v.name, v, collections=['gen'])
+            tf.summary.histogram('grad/' + v.name, tf.gradients(self._loss_gen(), v), collections=['gen'])
+
         tf.summary.scalar('gen/loss', self._loss_gen(), collections=['gen'])
+
+        tf.summary.histogram('gen/disc', self.disc(self.gen()), collections=['disc'])
+        tf.summary.scalar('gen/disc', tf.reduce_mean(self.disc(self.gen())), collections=['gen'])
+
         return tf.summary.merge_all(key='gen')
 
     def _summaries_disc(self):
         tf.get_variable_scope().reuse_variables()
         for v in tf.get_collection(tf.GraphKeys.TRAINABLE_VARIABLES, scope='disc'):
-            tf.summary.histogram(v.name, tf.gradients(self._loss_disc(), v), collections=['disc'])
+            tf.summary.histogram(v.name, v, collections=['disc'])
+            tf.summary.histogram('grad/' + v.name, tf.gradients(self._loss_disc(), v), collections=['disc'])
+
         tf.summary.scalar('disc/loss', self._loss_disc(), collections=['disc'])
+
+        tf.summary.histogram('disc/disc_real', self.disc(), collections=['disc'])
+        tf.summary.scalar('disc/disc_real', tf.reduce_mean(self.disc()), collections=['disc'])
+        tf.summary.histogram('disc/disc_fake', self.disc(self.gen()), collections=['disc'])
+        tf.summary.scalar('disc/disc_fake', tf.reduce_mean(self.disc(self.gen())), collections=['disc'])
+
         return tf.summary.merge_all(key='disc')
 
     def sample_noise(self, batch_size):
@@ -110,7 +123,7 @@ class GD(object):
         global_step = tf.Variable(0, dtype=tf.int32, trainable=False, name='global_step')
 
         with tf.control_dependencies(tf.get_collection(tf.GraphKeys.UPDATE_OPS, scope='gen')):
-            optimizer_gen = tf.train.AdamOptimizer(learning_rate=lr_gen).minimize(loss_gen_op,
+            optimizer_gen = tf.train.AdamOptimizer(learning_rate=lr_gen, beta2=0.5).minimize(loss_gen_op,
                                                                                   var_list=tf.get_collection(
                                                                                       tf.GraphKeys.TRAINABLE_VARIABLES,
                                                                                       'gen'))

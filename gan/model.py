@@ -19,10 +19,10 @@ class Generator(object):
             out_1 = fc('out_1', self.z, 1024, act=leaky_relu, is_training=self.is_training)
             out_2 = fc('out_2', out_1, 7 * 7 * 64, act=leaky_relu, is_training=self.is_training)
             out_2 = tf.reshape(out_2, [-1, 7, 7, 64])
-            out_3 = conv2d_transpose('out_3', out_2, filter=[7, 7, 32, 64], output_shape=[batch_size, 14, 14, 32],
+            out_3 = conv2d_transpose('out_3', out_2, filter=[3, 3, 32, 64], output_shape=[batch_size, 14, 14, 32],
                                         strides=[1, 2, 2, 1], padding='SAME',
                                         act=leaky_relu, is_training=self.is_training)
-            x = conv2d_transpose('out', out_3, filter=[6, 6, 1, 32], output_shape=[batch_size, 28, 28, 1],
+            x = conv2d_transpose('out', out_3, filter=[3, 3, 1, 32], output_shape=[batch_size, 28, 28, 1],
                                         strides=[1, 2, 2, 1], padding='SAME',
                                         act=tf.nn.sigmoid, bn=False)
         return x
@@ -39,9 +39,9 @@ class Discriminator(object):
             x = self.x
         with tf.variable_scope('disc'):
             x = tf.reshape(x, [-1, 28, 28, 1])
-            out_1 = conv2d('out_1', x, filter=[7, 7, 1, 32], strides=[1, 2, 2, 1], padding='SAME',
-                           act=leaky_relu, bn=False)
-            out_2 = conv2d('out_2', out_1, filter=[7, 7, 32, 64], strides=[1, 2, 2, 1], padding='SAME',
+            out_1 = conv2d('out_1', x, filter=[3, 3, 1, 32], strides=[1, 2, 2, 1], padding='SAME',
+                           act=leaky_relu, is_training=self.is_training)
+            out_2 = conv2d('out_2', out_1, filter=[3, 3, 32, 64], strides=[1, 2, 2, 1], padding='SAME',
                            act=leaky_relu, is_training=self.is_training)
             out_2 = tf.reshape(out_2, [-1, 7 * 7 * 64])
             out_3 = fc('out_3', out_2, 1024, act=leaky_relu, is_training=self.is_training)
@@ -115,7 +115,7 @@ class GD(object):
                                                                                       'gen'))
 
         with tf.control_dependencies(tf.get_collection(tf.GraphKeys.UPDATE_OPS, scope='disc')):
-            optimizer_disc = tf.train.RMSPropOptimizer(learning_rate=lr_disc).minimize(loss_disc_op,
+            optimizer_disc = tf.train.AdamOptimizer(learning_rate=lr_disc, beta2=0.5).minimize(loss_disc_op,
                                                                                     var_list=tf.get_collection(
                                                                                         tf.GraphKeys.TRAINABLE_VARIABLES,
                                                                                         'disc'), global_step=global_step)

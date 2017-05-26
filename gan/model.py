@@ -21,10 +21,11 @@ class Generator(object):
             out_2 = conv2d_transpose('out_2', out_1, filter=[3, 3, 4, 8], output_shape=[batch_size, 14, 14, 4],
                                         strides=[1, 2, 2, 1], padding='SAME',
                                         act=leaky_relu, is_training=self.is_training)
-            x = conv2d_transpose('out', out_2, filter=[3, 3, 1, 4], output_shape=[batch_size, 28, 28, 1],
+            out = conv2d_transpose('out', out_2, filter=[3, 3, 1, 4], output_shape=[batch_size, 28, 28, 1],
                                         strides=[1, 2, 2, 1], padding='SAME',
                                         act=tf.nn.sigmoid, bn=False)
-        return x
+            out = tf.reshape(out, [-1, 784])
+        return out
 
 
 class Discriminator(object):
@@ -169,4 +170,4 @@ class GD(object):
     def discriminate(self, sess, data):
         sess.run(tf.global_variables_initializer())
         self._load(sess)
-        return sess.run(tf.sigmoid(self.disc()), feed_dict={self.disc.x: data, self.disc.is_training: False})
+        return sess.run(self.disc(), feed_dict={self.disc.x: data, self.disc.is_training: False})

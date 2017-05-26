@@ -3,15 +3,16 @@ from model import *
 import os
 import shutil
 
+CASE = 'gd'
+CKPT_PATH = 'checkpoints/' + CASE
+GRAPH_PATH = 'graphs/' + CASE
 CODE_SIZE = 100
 LR_DISC = 2e-4
-LR_GEN = 2e-4
+LR_GEN = 5e-4
 BATCH_SIZE = 128
 FINAL_STEP = 500000
-CKPT_STEP = 10
-CKPT_PATH = 'checkpoints/code_' + str(CODE_SIZE)
+CKPT_STEP = 100
 RE_TRAIN = True
-GRAPH_PATH = 'graphs'
 
 
 def main():

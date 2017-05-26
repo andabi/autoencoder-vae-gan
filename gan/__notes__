@@ -1,9 +1,3 @@
-sugartensor보기(tflearn), variable별 gradient 보기
-deconv
---
-CIFAR-10 사용하기
-batch_normal과 sigmoid를 같이 사용할때의 문제점
-
 왜 학습이 잘 안되고 오래걸리나? VAE에 비해
 disc, gen 스케줄링 문제
 
@@ -15,3 +9,13 @@ vpn 접속 시간 늘리는 방법
 - 배치 사이즈 줄이기
 
 랜덤 서치를 더 효율적으로 할 방법
+
+conv를 쓰면 weight 수를 좀 더 자유도 높게 설정할 수 있음. fc는 이전 레이어의 배수여야 하지만 conv는 더 자유롭게 w,h,c를 지정가능.
+conv를 쓰면 어떤 부분이 병렬화되서 빨라지는거지? 채널?
+
+- 확실한 것
+disc의 마지막 레이어에 bn을 쓰면 학습 안됨 (로컬 미니멈)
+disc의 optimizer를 SGD 쓰면 학습 안됨 (loss가 안 떨어짐)
+
+- 시도해 볼 것
+real, fake 미니배치에 대해 각각 학습시켜보기

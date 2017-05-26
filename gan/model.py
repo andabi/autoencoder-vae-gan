@@ -13,20 +13,6 @@ class Generator(object):
         self.z = tf.placeholder(tf.float32, (batch_size, code_size), name='z')
         self()
 
-    # def __call__(self):
-    #     H_SIZE = 128
-    #     H2_SIZE = 256
-    #     H3_SIZE = 512
-    #     with tf.variable_scope('gen'):
-    #         out_1 = fc('out_1', self.z, H_SIZE, act=leaky_relu, is_training=self.is_training)
-    #         out_2 = fc('out_2', out_1, H2_SIZE, act=leaky_relu, is_training=self.is_training)
-    #         out_3 = fc('out_3', out_2, H3_SIZE, act=leaky_relu, is_training=self.is_training)
-    #         # out_4 = fc('out_4', out_3, H3_SIZE, is_training=self.is_training)
-    #         # out_5 = fc('out_5', out_4, H3_SIZE, is_training=self.is_training)
-    #         x = fc('x', out_3, X_SIZE, act=tf.nn.sigmoid, bn=False)
-    #     return x
-
-
     def __call__(self):
         batch_size = shape(self.z)[0]
         with tf.variable_scope('gen'):
@@ -60,7 +46,7 @@ class Discriminator(object):
             out_2 = tf.reshape(out_2, [-1, 7 * 7 * 64])
             out_3 = fc('out_3', out_2, 1024, act=leaky_relu, is_training=self.is_training)
             out_4 = fc('out_4', out_3, 10, act=leaky_relu, is_training=self.is_training)
-            d = fc('out', out_4, 1, act=tf.nn.sigmoid, is_training=self.is_training)
+            d = fc('out', out_4, 1, act=tf.nn.sigmoid, bn=False)
         return d
 
 
@@ -129,7 +115,7 @@ class GD(object):
                                                                                       'gen'))
 
         with tf.control_dependencies(tf.get_collection(tf.GraphKeys.UPDATE_OPS, scope='disc')):
-            optimizer_disc = tf.train.GradientDescentOptimizer(learning_rate=lr_disc).minimize(loss_disc_op,
+            optimizer_disc = tf.train.RMSPropOptimizer(learning_rate=lr_disc).minimize(loss_disc_op,
                                                                                     var_list=tf.get_collection(
                                                                                         tf.GraphKeys.TRAINABLE_VARIABLES,
                                                                                         'disc'), global_step=global_step)
@@ -143,6 +129,7 @@ class GD(object):
 
         loss_gen, loss_disc = Diff(), Diff()
         for step in range(global_step.eval(), final_step):
+            curr_loss_disc, s_disc_all = 0, None
             for k in range(k_disc):
                 input, _ = data.next_batch(batch_size)
                 _, curr_loss_disc, s_disc_all = sess.run([optimizer_disc, loss_disc_op, s_disc_all_op],
@@ -151,6 +138,7 @@ class GD(object):
                                                                            self.disc.is_training: True,
                                                                            self.gen.is_training: True})
 
+            curr_loss_gen, s_gen_all = 0, None
             for k in range(k_gen):
                 _, curr_loss_gen, s_gen_all = sess.run([optimizer_gen, loss_gen_op, s_gen_all_op],
                                                               feed_dict={self.gen.z: self.sample_noise(batch_size),

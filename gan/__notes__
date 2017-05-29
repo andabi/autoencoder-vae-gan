@@ -4,12 +4,12 @@ disc의 optimizer를 SGD 쓰면 학습 안됨 (loss가 안 떨어짐) 왜지?
 
 - 배운 것
 disc의 구분능은 항상 어느 정도는 유지되어야 한다. fake = 0.5 - a, real = 0.5 + a. gen입장에서는 disc가 매 순간 optimal
-gen의 구조는 데이터의 capacity에 비해 필요이상으로 복잡할 필요가 없고 딱 capacity 정도로만 최소화하여 만드는게 유리
+gen의 구조는 데이터의 capacity에 비해 필요이상으로 복잡할 필요가 없고 딱 capacity 정도로만 depth를 최소화하여 만드는게 유리. 레이어가 앞쪽에 있을수록 학습에 불리한데 어차피 disc에 비해 불리하지만 그나마 최소화 할 수 있음
 conv를 쓰면 weight 수를 좀 더 자유도 높게 설정할 수 있음. fc는 이전 레이어의 배수여야 하지만 conv는 더 자유롭게 w,h,c를 지정가능
 
 - 질문
-생성된 이미지의 명암대비는 왜 생기는 것?
 conv를 쓰면 어떤 부분이 병렬화되서 빨라지는거지? 채널?
+adamoptimizer beta2 0.5면 학습률 감소가 덜해지는건가?
 
 - 더 나아가
 CelabA로도 해보기

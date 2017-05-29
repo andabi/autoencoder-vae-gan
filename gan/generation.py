@@ -3,9 +3,11 @@ from model import *
 import numpy as np
 import tensorflow as tf
 
-NUM_GEN = 10
-CODE_SIZE = 50
-CKPT_PATH = 'checkpoints/code_' + str(CODE_SIZE)
+CASE = 'simple_gen_3'
+CKPT_PATH = 'checkpoints/' + CASE
+GRAPH_PATH = 'graphs/' + CASE
+NUM_GEN = 100
+CODE_SIZE = 128
 
 
 def main():
@@ -21,17 +23,17 @@ def main():
     )
 
     with tf.Session(config=config) as sess:
-        writer = tf.summary.FileWriter('./graphs', sess.graph)
+        writer = tf.summary.FileWriter(GRAPH_PATH, sess.graph)
 
         # x = np.random.normal(0, 1, (NUM_GEN, X_SIZE))
         # d = gd.discriminate(sess, x)
         # print 'random_image\tmean:{:2.4f}\tstd:{:2.4f}\n{}'.format(np.mean(d), np.std(d), d)
         #
-        # x = gd.generate(sess, NUM_GEN)
+        x = gd.generate(sess, NUM_GEN)
         # d = gd.discriminate(sess, x)
         # print 'fake_image\tmean:{:2.4f}\tstd:{:2.4f}\n{}'.format(np.mean(d), np.std(d), d)
 
-        x, _ = data.next_batch(NUM_GEN)
+        # x, _ = data.next_batch(NUM_GEN)
         # d = gd.discriminate(sess, x)
         # print 'real_image\tmean:{:2.4f}\tstd:{:2.4f}\n{}'.format(np.mean(d), np.std(d), d)
 

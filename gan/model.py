@@ -57,11 +57,11 @@ class GD(object):
         self.disc = disc
 
     def _loss_gen(self):
-        loss = -tf.log(self.disc(self.gen()))
+        loss = -tf.log(self.disc(self.gen()) + 1e-9)
         return tf.reduce_mean(loss)
 
     def _loss_disc(self):
-        loss_real, loss_fake = -tf.log(self.disc()), -tf.log(1. - self.disc(self.gen()))
+        loss_real, loss_fake = -tf.log(self.disc() + 1e-9), -tf.log(1. - self.disc(self.gen()) + 1e-9)
         loss = 0.5 * (loss_real + loss_fake)
         return tf.reduce_mean(loss)
 
@@ -115,7 +115,7 @@ class GD(object):
                                                                                       'gen'))
 
         with tf.control_dependencies(tf.get_collection(tf.GraphKeys.UPDATE_OPS, scope='disc')):
-            optimizer_disc = tf.train.AdamOptimizer(learning_rate=lr_disc, beta2=0.5).minimize(loss_disc_op,
+            optimizer_disc = tf.train.AdamOptimizer(learning_rate=lr_disc).minimize(loss_disc_op,
                                                                                     var_list=tf.get_collection(
                                                                                         tf.GraphKeys.TRAINABLE_VARIABLES,
                                                                                         'disc'), global_step=global_step)
@@ -125,7 +125,7 @@ class GD(object):
 
         s_gen_all_op = self._summaries_gen()
         s_disc_all_op = self._summaries_disc()
-        s_gen_img_op = tf.summary.image('generated_image', tf.reshape(self.gen(), [batch_size, 28, 28, 1]), 1)
+        s_gen_img_op = tf.summary.image('generated_image_training', tf.reshape(self.gen(), [batch_size, 28, 28, 1]), 1)
 
         loss_gen, loss_disc = Diff(), Diff()
         for step in range(global_step.eval(), final_step):

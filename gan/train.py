@@ -8,9 +8,9 @@ CKPT_PATH = 'checkpoints/' + CASE
 GRAPH_PATH = 'graphs/' + CASE
 CODE_SIZE = 128
 LR_DISC = 1e-4
-LR_GEN = 2e-3
+LR_GEN = 1e-3
 BATCH_SIZE = 128
-FINAL_STEP = 100000
+FINAL_STEP = 500000
 CKPT_STEP = 500
 RE_TRAIN = False
 
@@ -32,7 +32,7 @@ def main():
 
     with tf.Session() as sess:
         writer = tf.summary.FileWriter(GRAPH_PATH, sess.graph)
-        gd.train(sess, data, FINAL_STEP, LR_GEN, LR_DISC, BATCH_SIZE, writer, ckpt_step=CKPT_STEP)
+        gd.train(sess, data, FINAL_STEP, LR_GEN, LR_DISC, BATCH_SIZE, writer, ckpt_step=CKPT_STEP, k_gen=3)
         writer.close()
 
 if __name__ == '__main__':

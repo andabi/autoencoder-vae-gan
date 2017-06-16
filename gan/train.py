@@ -3,7 +3,7 @@ from model import *
 import os
 import shutil
 
-CASE = 'simple_gen_3'
+CASE = 'default'
 CKPT_PATH = 'checkpoints/' + CASE
 GRAPH_PATH = 'graphs/' + CASE
 CODE_SIZE = 128

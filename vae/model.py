@@ -1,15 +1,15 @@
 import os
 
-from utils import *
 import tensorflow as tf
-import numpy as np
+
+from utils import *
 
 X_SIZE = 784
 Z_SIZE = 128
 H_1_SIZE = 256
 
 
-class VariationalAutoEncoder(object):
+class VAE(object):
     def __init__(self, input_size=X_SIZE, code_size=Z_SIZE, ckpt_path='checkpoints'):
         self.is_training = tf.placeholder(tf.bool)
         self.input = tf.placeholder(tf.float32, shape=(None, input_size), name='input')
@@ -23,17 +23,17 @@ class VariationalAutoEncoder(object):
         self.loss = self._loss()
 
     def _encoder(self, input, code_size):
-        with tf.name_scope('encoder'):
+        with tf.variable_scope('encoder'):
             out_1_encoder = fc('out_1', input, H_1_SIZE, is_training=self.is_training)
-            mu = fc('mu', out_1_encoder, code_size, is_training=self.is_training, act=tf.tanh, w_init=tf.zeros)
-            log_var = fc('log_var', out_1_encoder, code_size, is_training=self.is_training, act=tf.tanh, w_init=tf.zeros)
-            return mu, log_var
+            mu = fc('mu', out_1_encoder, code_size, is_training=self.is_training, act=tf.tanh, w_init=tf.zeros_initializer)
+            log_var = fc('log_var', out_1_encoder, code_size, is_training=self.is_training, act=tf.tanh, w_init=tf.zeros_initializer)
+        return mu, log_var
 
     def _decoder(self, code, out_size):
-        with tf.name_scope('decoder'):
-            out_1_decoder = fc(code, H_1_SIZE, self.is_training, name='out_1')
-            out_decoder = fc(out_1_decoder, out_size, self.is_training, tf.nn.sigmoid, name='out')
-            return out_decoder
+        with tf.variable_scope('decoder'):
+            out_1_decoder = fc('out_1', code, H_1_SIZE, is_training=self.is_training)
+            out_decoder = fc('out', out_1_decoder, out_size, is_training=self.is_training, act=tf.nn.sigmoid)
+        return out_decoder
 
     def _loss(self):
         with tf.name_scope('loss'):

@@ -1,9 +1,8 @@
 import mnist
 from model import *
-import numpy as np
 import tensorflow as tf
 
-CASE = 'simple_gen_3'
+CASE = 'default'
 CKPT_PATH = 'checkpoints/' + CASE
 GRAPH_PATH = 'graphs/' + CASE
 NUM_GEN = 100

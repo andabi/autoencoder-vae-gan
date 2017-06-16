@@ -1,14 +1,16 @@
 import mnist
 from model import *
 import matplotlib.pyplot as plt
+import numpy as np
 
 NUM_GEN = 10
-CODE_SIZE = 2
-CKPT_PATH = 'checkpoints/code_' + str(CODE_SIZE)
+CODE_SIZE = 128
+CASE = 'default'
+CKPT_PATH = 'checkpoints/' + CASE
 
 
 def main():
-    model = VariationalAutoEncoder(code_size=CODE_SIZE, ckpt_path=CKPT_PATH)
+    model = VAE(code_size=CODE_SIZE, ckpt_path=CKPT_PATH)
 
     # with tf.Session() as sess:
     #     nx = ny = 10

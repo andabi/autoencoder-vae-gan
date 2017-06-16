@@ -1,4 +1,3 @@
-from utils import *
 import tensorflow as tf
 import mnist
 from model import autoencoder

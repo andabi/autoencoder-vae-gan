@@ -58,22 +58,11 @@ class AutoEncoder(object):
             if (step + 1) % ckpt_step == 0:
                 self.saver.save(sess, self.ckpt_path + '/autoencoder', step)
 
-    def test(self, sess, data, visualizer, num=2):
-        x, _ = data.next_batch(num)
-        for o in x:
-            visualizer(o)
-
+    def test(self, sess, x):
         self._load(sess)
         z = sess.run(self.encoder, feed_dict={self.input: x})
         out = sess.run(self.decoder, feed_dict={self.encoder: z})
-        for o in out:
-            visualizer(o)
-
-    def generate(self, sess, z, visualizer):
-        self._load(sess)
-        out = sess.run(self.decoder, feed_dict={self.encoder: z})
-        for o in out:
-            visualizer(o)
+        return out
 
 X_SIZE = 784
 Z_SIZE = 128
@@ -90,7 +79,7 @@ def _encoder(input, code_size):
 def _decoder(code, code_size, out_size):
     out_1_decoder = fc('out_1_decoder', code, code_size)
     out_2_decoder = fc('out_2_decoder', out_1_decoder, H_SIZE)
-    out_decoder = fc('out_decoder', out_2_decoder, out_size, tf.nn.sigmoid)
+    out_decoder = fc('out_decoder', out_2_decoder, out_size, act=tf.nn.sigmoid)
     return out_decoder
 
 
